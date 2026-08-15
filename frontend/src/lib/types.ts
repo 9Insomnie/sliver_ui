@@ -199,6 +199,7 @@ export interface Canary {
   Triggered: boolean
   FirstTriggered?: string
   LatestTrigger?: string
+  Count: number
 }
 
 export interface Credential {

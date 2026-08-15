@@ -92,6 +92,7 @@ func TestEndpointsRequireClient(t *testing.T) {
 		{"backdoor", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/backdoor", nil)},
 		{"dll hijack", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/dll-hijack", nil)},
 		{"shellcode rdi", httptest.NewRequest(http.MethodPost, "/api/shellcode/rdi", nil)},
+		{"canaries", httptest.NewRequest(http.MethodGet, "/api/canaries", nil)},
 		{"hosts list", httptest.NewRequest(http.MethodGet, "/api/hosts", nil)},
 		{"host single", httptest.NewRequest(http.MethodGet, "/api/hosts/h-1", nil)},
 		{"host rm", httptest.NewRequest(http.MethodDelete, "/api/hosts/h-1", nil)},
