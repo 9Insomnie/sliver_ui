@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -274,6 +275,39 @@ func buildImplantConfig(req *GenerateRequest, isBeacon bool) *clientpb.ImplantCo
 	return cfg
 }
 
+// implantFileExtension returns the file extension for a built implant,
+// mirroring sliver's server/generate naming rules. The stored config.Extension
+// is often empty, so the extension is derived from the output format and OS.
+func implantFileExtension(cfg *clientpb.ImplantConfig) string {
+	switch cfg.Format {
+	case clientpb.OutputFormat_SHARED_LIB:
+		switch cfg.GOOS {
+		case "windows":
+			return ".dll"
+		case "darwin":
+			return ".dylib"
+		default:
+			return ".so"
+		}
+	case clientpb.OutputFormat_SHELLCODE:
+		return ".bin"
+	default: // EXECUTABLE
+		if cfg.GOOS == "windows" {
+			return ".exe"
+		}
+	}
+	return ""
+}
+
+// ensureImplantExt appends the platform extension when the build name has none,
+// so downloaded files keep a meaningful format instead of a bare name.
+func ensureImplantExt(name string, cfg *clientpb.ImplantConfig) string {
+	if name == "" || filepath.Ext(name) != "" {
+		return name
+	}
+	return name + implantFileExtension(cfg)
+}
+
 // GenerateImplant generates and compiles an implant.
 func (c *Client) GenerateImplant(req *GenerateRequest) (map[string]any, error) {
 	if req.Name == "" {
@@ -291,10 +325,11 @@ func (c *Client) GenerateImplant(req *GenerateRequest) (map[string]any, error) {
 	if resp.File != nil {
 		data = base64.StdEncoding.EncodeToString(resp.File.Data)
 	}
+	name := ensureImplantExt(resp.File.Name, cfg)
 	return map[string]any{
 		"success": true,
-		"message": fmt.Sprintf("built %s (%s/%s)", resp.File.Name, req.OS, req.Arch),
-		"name":    resp.File.Name,
+		"message": fmt.Sprintf("built %s (%s/%s)", name, req.OS, req.Arch),
+		"name":    name,
 		"data":    data,
 	}, nil
 }

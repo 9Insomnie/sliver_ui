@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/bishopfox/sliver/protobuf/clientpb"
@@ -252,12 +253,26 @@ func (c *Client) Regenerate(implantName string) (*RegenerateResult, error) {
 	if resp.File != nil {
 		data = base64.StdEncoding.EncodeToString(resp.File.Data)
 	}
+	name := resp.File.Name
+	if name != "" && filepath.Ext(name) == "" {
+		name += implantFileExtension(c.configFromBuild(ctx, implantName))
+	}
 	return &RegenerateResult{
 		Success: true,
 		Message: fmt.Sprintf("regenerated %s", implantName),
-		Name:    resp.File.Name,
+		Name:    name,
 		Data:    data,
 	}, nil
+}
+
+// configFromBuild loads the stored implant config for a build so the filename
+// can be completed with the correct platform extension.
+func (c *Client) configFromBuild(ctx context.Context, implantName string) *clientpb.ImplantConfig {
+	builds, err := c.RPC.ImplantBuilds(ctx, &commonpb.Empty{})
+	if err != nil {
+		return nil
+	}
+	return builds.Configs[implantName]
 }
 
 // --- GetOperators — list multiplayer operators ---
