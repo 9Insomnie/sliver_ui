@@ -91,6 +91,16 @@
   filter: none;
 }
 
+.btn.active {
+  background: rgba(63, 213, 143, 0.12);
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn.active:hover {
+  background: rgba(63, 213, 143, 0.2);
+  color: var(--green);
+}
+
 .btn.danger {
   color: var(--red);
   border-color: var(--border-strong);

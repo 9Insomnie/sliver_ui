@@ -105,6 +105,55 @@ func (s *Server) handleReconfigure(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
+func (s *Server) handleOpenSession(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	async, err := c.OpenSessionFromBeacon(r.PathValue("id"))
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "async": async})
+}
+
+func (s *Server) handleCloseSession(w http.ResponseWriter, r *http.Request) {
+	id, c := s.sessionID(w, r)
+	if c == nil {
+		return
+	}
+	if err := c.CloseSession(id); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+func (s *Server) handleMonitorStart(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	if err := c.MonitorStart(); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+func (s *Server) handleMonitorStop(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	if err := c.MonitorStop(); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
 func (s *Server) handleBeaconTaskContent(w http.ResponseWriter, r *http.Request) {
 	c := s.requireClient(w)
 	if c == nil {

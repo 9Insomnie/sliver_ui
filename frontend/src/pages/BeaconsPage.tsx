@@ -30,9 +30,28 @@ export default function BeaconsPage() {
   const [tasksFor, setTasksFor] = useState<Beacon | null>(null)
   const [removing, setRemoving] = useState<Beacon | null>(null)
   const [busy, setBusy] = useState(false)
+  const [monitoring, setMonitoring] = useState(false)
+  const [monitorBusy, setMonitorBusy] = useState(false)
   const { t } = useTranslation()
   const navigate = useNavigate()
   const toast = useToast()
+
+  const toggleMonitor = async () => {
+    setMonitorBusy(true)
+    try {
+      if (monitoring) {
+        await api.monitorStop()
+        setMonitoring(false)
+      } else {
+        await api.monitorStart()
+        setMonitoring(true)
+      }
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setMonitorBusy(false)
+    }
+  }
 
   const load = async () => {
     try {
@@ -83,6 +102,9 @@ export default function BeaconsPage() {
           <div className="page-sub">{t('beacons.sub', { count: beacons.length })}</div>
         </div>
         <div className="toolbar">
+          <button className={monitoring ? 'btn active' : 'btn'} onClick={toggleMonitor} disabled={monitorBusy}>
+            {monitorBusy ? t('common.loading') : monitoring ? t('beacons.monitorOn') : t('beacons.monitorOff')}
+          </button>
           <button className="btn" onClick={load}>
             {t('common.refresh')}
           </button>

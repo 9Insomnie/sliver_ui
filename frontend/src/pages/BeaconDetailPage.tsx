@@ -57,6 +57,25 @@ export default function BeaconDetailPage() {
   const [loadingContent, setLoadingContent] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [opening, setOpening] = useState(false)
+
+  const openSession = async () => {
+    if (!beacon) return
+    setOpening(true)
+    try {
+      const res = await api.openSessionFromBeacon(beacon.ID)
+      if (res.async) {
+        toast.push('success', t('beacons.sessionQueued', { name: beacon.Name }))
+      } else {
+        toast.push('success', t('beacons.sessionOpened'))
+      }
+      navigate('/sessions')
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setOpening(false)
+    }
+  }
 
   const load = useCallback(async () => {
     if (!id) return
@@ -247,6 +266,9 @@ export default function BeaconDetailPage() {
                 </div>
               </div>
               <div className="side-actions">
+                <button className="btn" onClick={openSession} disabled={opening}>
+                  {opening ? t('common.loading') : t('beacons.openSession')}
+                </button>
                 <button className="btn danger" onClick={() => setRemoving(true)}>
                   {t('beacons.remove')}
                 </button>
