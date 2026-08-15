@@ -17,6 +17,7 @@ import JobsPage from './pages/JobsPage'
 import TasksPage from './pages/TasksPage'
 import LootPage from './pages/LootPage'
 import CanariesPage from './pages/CanariesPage'
+import AliasesPage from './pages/AliasesPage'
 import FilesPage from './pages/FilesPage'
 import ProcessesPage from './pages/ProcessesPage'
 import NetworkPage from './pages/NetworkPage'
@@ -260,7 +261,8 @@ export default function App() {
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/loot" element={<LootPage />} />
-  <Route path="/canaries" element={<CanariesPage />} />
+              <Route path="/canaries" element={<CanariesPage />} />
+              <Route path="/aliases" element={<AliasesPage />} />
               <Route path="/files" element={<FilesPage />} />
               <Route path="/processes" element={<ProcessesPage />} />
               <Route path="/network" element={<NetworkPage />} />

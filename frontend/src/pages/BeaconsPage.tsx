@@ -32,6 +32,8 @@ export default function BeaconsPage() {
   const [busy, setBusy] = useState(false)
   const [monitoring, setMonitoring] = useState(false)
   const [monitorBusy, setMonitorBusy] = useState(false)
+  const [pruning, setPruning] = useState(false)
+  const [pruneDays, setPruneDays] = useState(7)
   const { t } = useTranslation()
   const navigate = useNavigate()
   const toast = useToast()
@@ -94,6 +96,19 @@ export default function BeaconsPage() {
     }
   }
 
+  const prune = async () => {
+    setPruning(true)
+    try {
+      const res = await api.pruneBeacons(pruneDays)
+      toast.push('success', t('beacons.pruned', { count: res.pruned }))
+      load()
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setPruning(false)
+    }
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -102,6 +117,19 @@ export default function BeaconsPage() {
           <div className="page-sub">{t('beacons.sub', { count: beacons.length })}</div>
         </div>
         <div className="toolbar">
+          <label className="prune-control mono">
+            {t('beacons.pruneLabel')}
+            <input
+              type="number"
+              min={1}
+              value={pruneDays}
+              onChange={(e) => setPruneDays(Number(e.target.value) || 1)}
+              style={{ width: 56 }}
+            />
+          </label>
+          <button className="btn" onClick={prune} disabled={pruning}>
+            {pruning ? t('common.loading') : t('beacons.prune')}
+          </button>
           <button className={monitoring ? 'btn active' : 'btn'} onClick={toggleMonitor} disabled={monitorBusy}>
             {monitorBusy ? t('common.loading') : monitoring ? t('beacons.monitorOn') : t('beacons.monitorOff')}
           </button>

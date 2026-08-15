@@ -388,3 +388,19 @@ export interface ImplantConfigView {
   BeaconJitter: number
   C2: { URL: string }[]
 }
+
+export interface Alias {
+  Name: string
+  Version: string
+  CommandName: string
+  OriginalAuthor: string
+  RepoURL: string
+  Help: string
+  Entrypoint: string
+  AllowArgs: boolean
+  DefaultArgs: string
+  Platforms: string[]
+  IsAssembly: boolean
+  IsReflective: boolean
+}
+
