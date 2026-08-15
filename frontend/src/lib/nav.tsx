@@ -130,6 +130,14 @@ export const ICONS: Record<string, ReactNode> = {
       <circle cx="7" cy="17.5" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   ),
+  websites: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="14" rx="2" />
+      <path d="M3 9h18" />
+      <circle cx="6.5" cy="6.5" r="0.9" fill="currentColor" stroke="none" />
+      <path d="M12 13l-2 2 2 2M15 13l2 2-2 2" />
+    </svg>
+  ),
   caret: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="m6 9 6 6 6-6" />
@@ -191,6 +199,7 @@ export const GROUPED_NAV: NavSection[] = [
     key: 'analysis',
     items: [
       { path: '/hosts', key: 'hosts', icon: ICONS.hosts },
+      { path: '/websites', key: 'websites', icon: ICONS.websites },
       { path: '/events', key: 'events', icon: ICONS.events },
     ],
   },

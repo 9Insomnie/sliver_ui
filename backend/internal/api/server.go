@@ -146,6 +146,13 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("DELETE /api/hosts/{uuid}", s.handleHostRm)
 	mux.HandleFunc("DELETE /api/hosts/{uuid}/iocs/{iocID}", s.handleHostIOCRm)
 
+	mux.HandleFunc("GET /api/websites", s.handleWebsites)
+	mux.HandleFunc("GET /api/websites/{name}", s.handleWebsite)
+	mux.HandleFunc("POST /api/websites/{name}/content", s.handleWebsiteAddContent)
+	mux.HandleFunc("PUT /api/websites/{name}/content", s.handleWebsiteUpdateContent)
+	mux.HandleFunc("DELETE /api/websites/{name}/content", s.handleWebsiteRemoveContent)
+	mux.HandleFunc("DELETE /api/websites/{name}", s.handleWebsiteRemove)
+
 	mux.HandleFunc("GET /api/socks", s.handleSocksList)
 	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
 	mux.HandleFunc("DELETE /api/socks/{id}", s.handleSocksStop)
