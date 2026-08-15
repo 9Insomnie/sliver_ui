@@ -188,6 +188,15 @@ export default function LootPage() {
     }
   }
 
+  const copyText = async (text: string, name: string) => {
+    try {
+      await navigator.clipboard.writeText(text || '')
+      toast.push('success', t('loot.copied', { name }))
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    }
+  }
+
   const columns: Column<LootEntry>[] = [
     {
       key: 'Name',
@@ -284,77 +293,90 @@ export default function LootPage() {
         }
       >
         {selected && (
-          <div className="task-detail">
-            <div className="kv">
-              <div className="side-row">
-                <span className="side-label">{t('loot.thName')}</span>
-                {renaming ? (
-                  <div className="rename-inline">
-                    <input className="input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
-                    <button className="btn sm primary" onClick={renameLoot} disabled={!renameValue.trim()}>
-                      {t('common.save')}
-                    </button>
-                    <button
-                      className="btn sm"
-                      onClick={() => {
-                        setRenaming(false)
-                        setRenameValue(selected.Name)
-                      }}
-                    >
-                      {t('common.cancel')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rename-inline">
-                    <span className="side-value">{selected.Name}</span>
-                    <button className="btn sm" onClick={() => setRenaming(true)}>
-                      {t('loot.rename')}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="side-row">
-                <span className="side-label">{t('loot.thType')}</span>
-                <StatusBadge tone={toneForType(selected.LootType)}>{selected.LootType}</StatusBadge>
-              </div>
-              <div className="side-row">
-                <span className="side-label">{t('loot.thFileType')}</span>
-                <span className="side-value">{selected.FileType}</span>
-              </div>
-              <div className="side-row">
-                <span className="side-label">{t('loot.thSize')}</span>
-                <span className="side-value">{fmtSize(selected.Size)}</span>
-              </div>
-              {selected.File && (
-                <div className="side-row">
-                  <span className="side-label">{t('loot.thFile')}</span>
-                  <span className="side-value mono">{selected.File}</span>
+          <div className="drawer-detail">
+            <div className="drawer-section">{t('loot.metadata')}</div>
+            <div className="drow">
+              <span className="dlabel">{t('loot.thName')}</span>
+              {renaming ? (
+                <div className="drawer-rename">
+                  <input className="input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+                  <button className="btn sm primary" onClick={renameLoot} disabled={!renameValue.trim()}>
+                    {t('common.save')}
+                  </button>
+                  <button
+                    className="btn sm"
+                    onClick={() => {
+                      setRenaming(false)
+                      setRenameValue(selected.Name)
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </button>
                 </div>
-              )}
-              {selected.LootType.includes('CREDENTIAL') && (
-                <>
-                  <div className="side-row">
-                    <span className="side-label">{t('loot.credUser')}</span>
-                    <span className="side-value mono">{(fullEntry || selected).CredUser || '—'}</span>
-                  </div>
-                  <div className="side-row">
-                    <span className="side-label">{t('loot.credPassword')}</span>
-                    <span className="side-value mono">{(fullEntry || selected).CredPassword || '—'}</span>
-                  </div>
-                  <div className="side-row">
-                    <span className="side-label">{t('loot.credApiKey')}</span>
-                    <span className="side-value mono">{(fullEntry || selected).CredAPIKey || '—'}</span>
-                  </div>
-                </>
+              ) : (
+                <div className="drawer-rename">
+                  <span className="dvalue">{selected.Name}</span>
+                  <button className="btn sm" onClick={() => setRenaming(true)}>
+                    {t('loot.rename')}
+                  </button>
+                </div>
               )}
             </div>
-            {selected.LootType.includes('FILE') && (
-              <div className="task-content">
-                <div className="task-content-header">
-                  <span>{t('loot.content')}</span>
-                </div>
-                {loadingContent ? <pre>{t('common.loading')}</pre> : <pre>{content || t('tasks.none')}</pre>}
+            <div className="drow">
+              <span className="dlabel">{t('loot.thType')}</span>
+              <StatusBadge tone={toneForType(selected.LootType)}>{selected.LootType}</StatusBadge>
+            </div>
+            <div className="drow">
+              <span className="dlabel">{t('loot.thFileType')}</span>
+              <span className="dvalue mono">{selected.FileType}</span>
+            </div>
+            <div className="drow">
+              <span className="dlabel">{t('loot.thSize')}</span>
+              <span className="dvalue mono">{fmtSize(selected.Size)}</span>
+            </div>
+            {selected.File && (
+              <div className="drow">
+                <span className="dlabel">{t('loot.thFile')}</span>
+                <span className="dvalue mono">{selected.File}</span>
               </div>
+            )}
+            {selected.LootType.includes('CREDENTIAL') && (
+              <>
+                <div className="drawer-section">{t('loot.filterCreds')}</div>
+                <div className="drow">
+                  <span className="dlabel">{t('loot.credUser')}</span>
+                  <div className="drawer-copy">
+                    <span className="dvalue mono">{(fullEntry || selected).CredUser || '—'}</span>
+                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredUser || '', t('loot.credUser'))}>
+                      {t('loot.copy')}
+                    </button>
+                  </div>
+                </div>
+                <div className="drow">
+                  <span className="dlabel">{t('loot.credPassword')}</span>
+                  <div className="drawer-copy">
+                    <span className="dvalue mono">{(fullEntry || selected).CredPassword || '—'}</span>
+                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredPassword || '', t('loot.credPassword'))}>
+                      {t('loot.copy')}
+                    </button>
+                  </div>
+                </div>
+                <div className="drow">
+                  <span className="dlabel">{t('loot.credApiKey')}</span>
+                  <div className="drawer-copy">
+                    <span className="dvalue mono">{(fullEntry || selected).CredAPIKey || '—'}</span>
+                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredAPIKey || '', t('loot.credApiKey'))}>
+                      {t('loot.copy')}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+            {selected.LootType.includes('FILE') && (
+              <>
+                <div className="drawer-section">{t('loot.content')}</div>
+                {loadingContent ? <pre className="viewer-pre">{t('common.loading')}</pre> : <pre className="viewer-pre">{content || t('tasks.none')}</pre>}
+              </>
             )}
           </div>
         )}
@@ -375,9 +397,9 @@ export default function LootPage() {
           </div>
         }
       >
-        <div className="form">
-          <label className="form-label">{t('loot.addType')}</label>
-          <div className="seg">
+        <div className="drawer-detail">
+          <div className="drawer-section">{t('loot.addType')}</div>
+          <div className="seg" style={{ alignSelf: 'flex-start' }}>
             <button className={addType === 'file' ? 'active' : ''} onClick={() => setAddType('file')}>
               {t('loot.filterFiles')}
             </button>
@@ -385,16 +407,18 @@ export default function LootPage() {
               {t('loot.filterCreds')}
             </button>
           </div>
-          <label className="form-label">{t('loot.thName')}</label>
-          <input className="input" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={t('loot.namePlaceholder')} />
+          <div className="field">
+            <label>{t('loot.thName')}</label>
+            <input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={t('loot.namePlaceholder')} />
+          </div>
           {addType === 'file' ? (
-            <>
-              <label className="form-label">{t('loot.fileField')}</label>
-              <input className="input" type="file" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
-            </>
+            <div className="field">
+              <label>{t('loot.fileField')}</label>
+              <input type="file" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
+            </div>
           ) : (
             <>
-              <div className="seg">
+              <div className="seg" style={{ alignSelf: 'flex-start' }}>
                 <button className={addCredType === 'up' ? 'active' : ''} onClick={() => setAddCredType('up')}>
                   {t('loot.credUp')}
                 </button>
@@ -404,16 +428,20 @@ export default function LootPage() {
               </div>
               {addCredType === 'up' ? (
                 <>
-                  <label className="form-label">{t('loot.credUser')}</label>
-                  <input className="input" value={addUser} onChange={(e) => setAddUser(e.target.value)} />
-                  <label className="form-label">{t('loot.credPassword')}</label>
-                  <input className="input" type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} />
+                  <div className="field">
+                    <label>{t('loot.credUser')}</label>
+                    <input value={addUser} onChange={(e) => setAddUser(e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>{t('loot.credPassword')}</label>
+                    <input type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} />
+                  </div>
                 </>
               ) : (
-                <>
-                  <label className="form-label">{t('loot.credApiKey')}</label>
-                  <input className="input" value={addApiKey} onChange={(e) => setAddApiKey(e.target.value)} />
-                </>
+                <div className="field">
+                  <label>{t('loot.credApiKey')}</label>
+                  <input value={addApiKey} onChange={(e) => setAddApiKey(e.target.value)} />
+                </div>
               )}
             </>
           )}

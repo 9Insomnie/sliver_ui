@@ -26,33 +26,14 @@ import HostsPage from './pages/HostsPage'
 import WebsitesPage from './pages/WebsitesPage'
 import SettingsPage from './pages/SettingsPage'
 import Logo from './components/Logo'
-import CommandPalette from './components/CommandPalette'
 import { ToastProvider } from './components/common/Toast'
 import './App.css'
 
 export default function App() {
   const { connected, version, counts } = useConnection()
-  const [paletteOpen, setPaletteOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const typing = (e.target as HTMLElement)?.closest('input, textarea, select')
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setPaletteOpen((v) => !v)
-        return
-      }
-      if (e.key === '/' && !typing) {
-        e.preventDefault()
-        setPaletteOpen(true)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   const lang = i18n.language === 'zh' ? 'zh' : 'en'
   const toggleLang = () => {
@@ -171,16 +152,6 @@ export default function App() {
           <span className="logo-caret">{ICONS.caret}</span>
         </div>
 
-        <button
-          className="sidebar-search"
-          onClick={() => setPaletteOpen(true)}
-          aria-label={t('app.search')}
-        >
-          <span>{ICONS.search}</span>
-          <span className="sidebar-search-label">{t('app.search')}</span>
-          <kbd className="kbd">⌘K</kbd>
-        </button>
-
         <nav>
           {GROUPED_NAV.map((section) => (
             <div className="nav-section" key={section.key}>
@@ -225,15 +196,6 @@ export default function App() {
             <span className="topbar-page">{t('app.title')}</span>
           </div>
           <div className="topbar-right">
-            <button
-              className="topbar-search"
-              onClick={() => setPaletteOpen(true)}
-              aria-label={t('app.search')}
-            >
-              {ICONS.search}
-              <span className="topbar-search-label">{t('app.search')}</span>
-              <kbd className="kbd">⌘K</kbd>
-            </button>
             <div className={`server-status ${connected ? 'ok' : 'bad'}`}>
               <span className={`dot ${connected ? 'ok' : 'bad'}`} />
               <span className="server-status-text">
@@ -277,7 +239,6 @@ export default function App() {
         </main>
       </div>
       </div>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onToggleLang={toggleLang} />
       </ConnectionProvider>
     </ToastProvider>
   )

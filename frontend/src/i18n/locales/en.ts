@@ -7,7 +7,6 @@ export default {
     language: 'Language',
     workspace: 'Workspace',
     favorites: 'Favorites',
-    search: 'Search or jump',
   },
   nav: {
     group: {
@@ -59,6 +58,12 @@ export default {
     socks: 'SOCKS5',
     activeSessions: 'Active Sessions',
     recentActivity: 'Recent Activity',
+    byOs: 'Sessions by OS',
+    byTransport: 'Transport mix',
+    topHosts: 'Top hosts by sessions',
+    activity: 'Activity by event type',
+    total: 'total',
+    noData: 'No data to chart',
   },
   common: {
     refresh: 'Refresh',
@@ -79,14 +84,6 @@ export default {
     working: 'Working…',
     empty: 'No data',
     viewAll: 'View all',
-  },
-  palette: {
-    navigate: 'Navigate',
-    targets: 'Targets',
-    actions: 'Actions',
-    placeholder: 'Search or jump to...',
-    noResults: 'No results found',
-    toggleLang: 'Switch language to {{lang}}',
   },
   time: {
     justNow: 'just now',
@@ -277,6 +274,9 @@ export default {
     credApiKey: 'API Key',
     credUser: 'Username',
     credPassword: 'Password',
+    copy: 'Copy',
+    copied: 'Copied {{name}}',
+    metadata: 'Metadata',
   },
   canaries: {
     title: 'Canaries',
