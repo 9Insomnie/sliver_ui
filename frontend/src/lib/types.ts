@@ -168,6 +168,24 @@ export interface Website {
   Size: number
 }
 
+export interface WGClientConfig {
+  ServerPubKey: string
+  ClientPrivateKey: string
+  ClientPubKey: string
+  ClientIP: string
+}
+
+export interface WGTCPForwarder {
+  ID: number
+  LocalAddr: string
+  RemoteAddr: string
+}
+
+export interface WGSocksServer {
+  ID: number
+  LocalAddr: string
+}
+
 export interface Operator {
   Name: string
   FirstContact: string
