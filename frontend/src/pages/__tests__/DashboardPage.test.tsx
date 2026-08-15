@@ -56,9 +56,11 @@ describe('DashboardPage', () => {
     })
 
     const view = renderPage()
-    await waitFor(() => expect(screen.getAllByText('3').length).toBeGreaterThan(0))
-    expect(screen.getByText('SESS-1')).toBeInTheDocument()
-    expect(screen.getAllByText('mtls').length).toBeGreaterThan(0)
+    await waitFor(() => {
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0)
+      expect(screen.getByText('SESS-1')).toBeInTheDocument()
+      expect(screen.getAllByText('mtls').length).toBeGreaterThan(0)
+    })
     view.unmount()
   })
 
