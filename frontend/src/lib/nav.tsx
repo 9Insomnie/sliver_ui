@@ -223,10 +223,3 @@ export const GROUPED_NAV: NavSection[] = [
     items: [{ path: '/settings', key: 'settings', icon: ICONS.settings }],
   },
 ]
-
-// Favorites 段:用户常用(默认收藏 Sessions / Implants,可由用户调整)
-export const FAVORITES_NAV: NavItem[] = [
-  { path: '/', key: 'dashboard', icon: ICONS.dashboard, favorite: true },
-  { path: '/sessions', key: 'sessions', icon: ICONS.sessions, favorite: true },
-  { path: '/beacons', key: 'beacons', icon: ICONS.beacons, favorite: true },
-]

@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ConnectionProvider, useConnection } from './lib/connection'
-import { GROUPED_NAV, FAVORITES_NAV, ICONS } from './lib/nav'
+import { GROUPED_NAV, ICONS } from './lib/nav'
 import DashboardPage from './pages/DashboardPage'
 import SessionsPage from './pages/SessionsPage'
 import SessionDetailPage from './pages/SessionDetailPage'
@@ -70,7 +70,8 @@ export default function App() {
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     )
   }, [])
-  const favoriteItems = FAVORITES_NAV.filter((item) => favorites.includes(item.key))
+  const ALL_NAV = GROUPED_NAV.flatMap((section) => section.items)
+  const favoriteItems = ALL_NAV.filter((item) => favorites.includes(item.key))
 
   const badgeFor = (key: string): number | null => {
     switch (key) {
