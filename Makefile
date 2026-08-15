@@ -2,6 +2,14 @@ BIN      ?= sliver-ui
 GO       ?= go
 NPM      ?= npm
 
+# On Windows the binary is linked as a GUI subsystem so it starts without a
+# cmd console window. Extra ldflags can be appended via GO_LDFLAGS.
+GOOS       := $(shell $(GO) env GOOS)
+GO_LDFLAGS ?=
+ifeq ($(GOOS),windows)
+GO_LDFLAGS += -H=windowsgui
+endif
+
 .PHONY: all frontend-build backend-build build test vet run dev clean
 
 all: build
@@ -16,7 +24,7 @@ frontend-build:
 
 ## backend-build: build the single Go binary.
 backend-build:
-	cd backend && $(GO) build -o ../$(BIN) .
+	cd backend && $(GO) build -ldflags "$(GO_LDFLAGS)" -o ../$(BIN) .
 
 ## build: full single-binary production build (frontend embedded in backend).
 build: frontend-build backend-build
