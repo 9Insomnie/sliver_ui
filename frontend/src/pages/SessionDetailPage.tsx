@@ -1,0 +1,230 @@
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { api } from '../lib/api'
+import type { Session } from '../lib/types'
+import InlineEdit from '../components/InlineEdit'
+import FilesTab from '../components/session/FilesTab'
+import ProcessesTab from '../components/session/ProcessesTab'
+import NetworkTab from '../components/session/NetworkTab'
+import EnvTab from '../components/session/EnvTab'
+import ExecTab from '../components/session/ExecTab'
+import ScreenshotTab from '../components/session/ScreenshotTab'
+import PortfwdTab from '../components/session/PortfwdTab'
+import RegistryTab from '../components/session/RegistryTab'
+import AdvancedTab from '../components/session/AdvancedTab'
+import TokensTab from '../components/session/TokensTab'
+import './pages.css'
+import './session.css'
+
+const TABS = ['files', 'processes', 'network', 'env', 'exec', 'screenshot', 'portfwd', 'registry', 'advanced', 'tokens'] as const
+type TabKey = (typeof TABS)[number]
+
+type TFunc = ReturnType<typeof useTranslation>['t']
+
+function fmtTime(ts: string, t: TFunc): string {
+  if (!ts) return '-'
+  const d = new Date(ts)
+  if (Number.isNaN(d.getTime())) return ts
+  const now = Date.now()
+  const diff = Math.round((now - d.getTime()) / 1000)
+  if (diff < 60) return t('time.secondsAgo', { count: diff })
+  if (diff < 3600) return t('time.minutesAgo', { count: Math.round(diff / 60) })
+  if (diff < 86400) return t('time.hoursAgo', { count: Math.round(diff / 3600) })
+  return t('time.daysAgo', { count: Math.round(diff / 86400) })
+}
+
+export default function SessionDetailPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { t } = useTranslation()
+  const [session, setSession] = useState<Session | null>(null)
+  const [error, setError] = useState('')
+  const [tab, setTab] = useState<TabKey>('files')
+  const [pingMsg, setPingMsg] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    const poll = () => {
+      api
+        .sessions()
+        .then((d) => {
+          if (!alive) return
+          const s = d.sessions.find((x) => x.ID === id)
+          setSession(s || null)
+          if (!s) setError(t('detail.notFound'))
+        })
+        .catch((e) => {
+          if (alive) setError((e as Error).message)
+        })
+    }
+    poll()
+    const timer = setInterval(poll, 5000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [id, t])
+
+  const rename = async (name: string) => {
+    if (!session) return
+    try {
+      await api.renameSession(session.ID, name)
+      setSession({ ...session, Name: name })
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const kill = async () => {
+    if (!session) return
+    if (!window.confirm(t('detail.sidebar.confirmKill', { name: session.Name }))) return
+    try {
+      await api.killSession(session.ID)
+      navigate('/')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const ping = async () => {
+    setPingMsg('')
+    try {
+      const r = await api.ping(session!.ID)
+      setPingMsg(t('detail.pingOk', { nonce: r.nonce }))
+    } catch (e) {
+      setPingMsg(`${t('common.failed')}: ${(e as Error).message}`)
+    }
+  }
+
+  return (
+    <div className="page page-detail">
+      {error && <div className="error-banner">{error}</div>}
+      {pingMsg && (
+        <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          {pingMsg}
+        </div>
+      )}
+
+      {session && (
+        <div className="issue-layout">
+          <div className="issue-main">
+            <div className="issue-header">
+              <div className="issue-title-block">
+                <div className="issue-title-row">
+                  <InlineEdit value={session.Name} onSave={rename} />
+                  <span className={`badge ${session.IsDead ? 'red' : 'green'}`}>
+                    {session.IsDead ? t('detail.sidebar.dead') : t('detail.sidebar.active')}
+                  </span>
+                </div>
+                <div className="page-sub">
+                  {session.Hostname} · {session.RemoteAddress} · {session.Transport}
+                </div>
+              </div>
+              <div className="toolbar">
+                <button className="btn primary" onClick={() => navigate(`/sessions/${session.ID}/terminal`)}>
+                  {t('detail.openTerminal')}
+                </button>
+                <button className="btn" onClick={ping} title="Ping">
+                  {t('detail.ping')}
+                </button>
+                <button className="btn" onClick={() => navigate('/')}>
+                  {t('detail.back')}
+                </button>
+              </div>
+            </div>
+
+            <div className="tabs">
+              {TABS.map((key) => (
+                <button
+                  key={key}
+                  className={`tab ${tab === key ? 'active' : ''}`}
+                  onClick={() => setTab(key)}
+                >
+                  {t(`detail.tabs.${key}`)}
+                </button>
+              ))}
+            </div>
+
+            <div className="tab-content">
+              {tab === 'files' && <FilesTab sessionId={session.ID} os={session.OS} />}
+              {tab === 'processes' && <ProcessesTab sessionId={session.ID} />}
+              {tab === 'network' && <NetworkTab sessionId={session.ID} />}
+              {tab === 'env' && <EnvTab sessionId={session.ID} />}
+              {tab === 'exec' && <ExecTab sessionId={session.ID} />}
+              {tab === 'screenshot' && <ScreenshotTab sessionId={session.ID} />}
+              {tab === 'portfwd' && <PortfwdTab sessionId={session.ID} />}
+              {tab === 'registry' && <RegistryTab sessionId={session.ID} os={session.OS} />}
+              {tab === 'advanced' && <AdvancedTab sessionId={session.ID} />}
+              {tab === 'tokens' && <TokensTab sessionId={session.ID} os={session.OS} />}
+            </div>
+          </div>
+
+          <aside className="issue-side">
+            <div className="side-card">
+              <div className="side-card-title">{t('detail.sidebar.properties')}</div>
+              <div className="side-row">
+                <span className="side-label">ID</span>
+                <span className="side-value mono">{session.ID}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.hostname')}</span>
+                <span className="side-value">{session.Hostname}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.user')}</span>
+                <span className="side-value">{session.Username}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.os')}</span>
+                <span className="side-value">
+                  {session.OS}/{session.Arch}
+                </span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.pid')}</span>
+                <span className="side-value mono">{session.PID}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.transport')}</span>
+                <span className="side-value">{session.Transport}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.remote')}</span>
+                <span className="side-value mono">{session.RemoteAddress}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.c2')}</span>
+                <span className="side-value mono">{session.ActiveC2}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.checkin')}</span>
+                <span className="side-value">{fmtTime(session.LastCheckin, t)}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.locale')}</span>
+                <span className="side-value">{session.Locale || '-'}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.agent')}</span>
+                <span className="side-value mono">v{session.AgentVersion}</span>
+              </div>
+              <div className="side-row">
+                <span className="side-label">{t('detail.sidebar.uid')}</span>
+                <span className="side-value mono">{session.UID}/{session.GID}</span>
+              </div>
+            </div>
+
+            <div className="side-actions">
+              <button className="btn danger" onClick={kill}>
+                {t('detail.sidebar.kill')}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {!error && !session && <div className="empty">{t('common.loading')}</div>}
+    </div>
+  )
+}

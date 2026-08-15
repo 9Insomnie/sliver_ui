@@ -1,0 +1,21 @@
+.page-terminal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 24px;
+}
+
+.terminal-container {
+  flex: 1;
+  background: #0a0a0b;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  overflow: hidden;
+  min-height: 300px;
+  box-shadow: var(--shadow-sm);
+}
+
+.terminal-container .xterm {
+  height: 100%;
+}
