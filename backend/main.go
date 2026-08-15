@@ -12,8 +12,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jchv/go-webview2"
-
 	"sliverui/internal/api"
 )
 
@@ -55,28 +53,10 @@ func main() {
 		select {}
 	}
 
-	// Desktop mode: show the embedded frontend in a native WebView2 window.
-	// The window event loop blocks until it is closed, then the process exits.
+	// Desktop mode: show the embedded frontend in a native window. The window
+	// event loop blocks until it is closed, then the process exits.
 	time.Sleep(400 * time.Millisecond)
 	runWindow(url)
-}
-
-// runWindow opens a native window that renders the web UI.
-func runWindow(url string) {
-	w := webview2.NewWithOptions(webview2.WebViewOptions{
-		WindowOptions: webview2.WindowOptions{
-			Title:  "Sliver UI",
-			Width:  1440,
-			Height: 900,
-			Center: true,
-		},
-	})
-	if w == nil {
-		log.Fatal("[ui] failed to create webview window")
-	}
-	defer w.Destroy()
-	w.Navigate(url)
-	w.Run()
 }
 
 // initLog mirrors the console log into sliver-ui.log so errors remain
