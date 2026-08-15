@@ -109,14 +109,15 @@ export interface Job {
   JobControl: string
 }
 
-export interface Loot {
-  LootID: string
+export interface LootEntry {
+  ID: string
   Name: string
-  Type: string
+  LootType: string
   FileType: string
+  File: string
   Size: number
-  FileName: string
   OriginHostUUID: string
+  DataB64?: string
 }
 
 export interface Operator {

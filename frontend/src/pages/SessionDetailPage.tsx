@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import type { Session } from '../lib/types'
 import InlineEdit from '../components/InlineEdit'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useToast } from '../components/common/Toast'
 import FilesTab from '../components/session/FilesTab'
 import ProcessesTab from '../components/session/ProcessesTab'
 import NetworkTab from '../components/session/NetworkTab'
@@ -38,10 +40,13 @@ export default function SessionDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const toast = useToast()
   const [session, setSession] = useState<Session | null>(null)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<TabKey>('files')
   const [pingMsg, setPingMsg] = useState('')
+  const [killing, setKilling] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -78,12 +83,16 @@ export default function SessionDetailPage() {
 
   const kill = async () => {
     if (!session) return
-    if (!window.confirm(t('detail.sidebar.confirmKill', { name: session.Name }))) return
+    setBusy(true)
     try {
       await api.killSession(session.ID)
+      toast.push('success', t('sessions.killed', { name: session.Name }))
       navigate('/')
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setBusy(false)
+      setKilling(false)
     }
   }
 
@@ -124,6 +133,15 @@ export default function SessionDetailPage() {
               <div className="toolbar">
                 <button className="btn primary" onClick={() => navigate(`/sessions/${session.ID}/terminal`)}>
                   {t('detail.openTerminal')}
+                </button>
+                <button className="btn" onClick={() => setTab('processes')}>
+                  {t('detail.tabs.processes')}
+                </button>
+                <button className="btn" onClick={() => setTab('network')}>
+                  {t('detail.tabs.network')}
+                </button>
+                <button className="btn" onClick={() => setTab('screenshot')}>
+                  {t('detail.tabs.screenshot')}
                 </button>
                 <button className="btn" onClick={ping} title="Ping">
                   {t('detail.ping')}
@@ -216,7 +234,7 @@ export default function SessionDetailPage() {
             </div>
 
             <div className="side-actions">
-              <button className="btn danger" onClick={kill}>
+              <button className="btn danger" onClick={() => setKilling(true)}>
                 {t('detail.sidebar.kill')}
               </button>
             </div>
@@ -225,6 +243,18 @@ export default function SessionDetailPage() {
       )}
 
       {!error && !session && <div className="empty">{t('common.loading')}</div>}
+
+      <ConfirmDialog
+        open={killing}
+        title={t('sessions.confirmKill')}
+        danger
+        busy={busy}
+        confirmLabel={t('sessions.kill')}
+        onConfirm={kill}
+        onCancel={() => setKilling(false)}
+      >
+        <p>{session ? t('sessions.confirmKillBody', { name: session.Name, id: session.ID }) : ''}</p>
+      </ConfirmDialog>
     </div>
   )
 }

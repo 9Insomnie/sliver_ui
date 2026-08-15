@@ -167,16 +167,16 @@ export const GROUPED_NAV: NavSection[] = [
     key: 'tasking',
     items: [
       { path: '/jobs', key: 'jobs', icon: ICONS.jobs },
-      { path: '/sessions', key: 'tasks', icon: ICONS.tasks, disabled: true },
-      { path: '/loot', key: 'loot', icon: ICONS.loot, disabled: true },
+      { path: '/tasks', key: 'tasks', icon: ICONS.tasks },
+      { path: '/loot', key: 'loot', icon: ICONS.loot },
     ],
   },
   {
     key: 'host',
     items: [
-      { path: '/processes', key: 'processes', icon: ICONS.processes, disabled: true },
-      { path: '/network', key: 'network', icon: ICONS.network, disabled: true },
-      { path: '/files', key: 'files', icon: ICONS.files, disabled: true },
+      { path: '/processes', key: 'processes', icon: ICONS.processes },
+      { path: '/network', key: 'network', icon: ICONS.network },
+      { path: '/files', key: 'files', icon: ICONS.files },
     ],
   },
   {

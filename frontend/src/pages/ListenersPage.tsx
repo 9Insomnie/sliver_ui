@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import type { Job } from '../lib/types'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import ContextMenu from '../components/common/ContextMenu'
+import { useToast } from '../components/common/Toast'
 import './pages.css'
 
 export default function ListenersPage() {
@@ -12,8 +15,11 @@ export default function ListenersPage() {
   const [port, setPort] = useState('8888')
   const [tls, setTls] = useState(false)
   const [starting, setStarting] = useState(false)
-  const [message, setMessage] = useState('')
+  const [stopping, setStopping] = useState<Job | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [menu, setMenu] = useState<{ x: number; y: number; job: Job } | null>(null)
   const { t } = useTranslation()
+  const toast = useToast()
 
   const load = async () => {
     try {
@@ -33,27 +39,30 @@ export default function ListenersPage() {
 
   const start = async () => {
     setStarting(true)
-    setMessage('')
     try {
       const res = await api.startListener({ type, addr, port: Number(port), tls })
-      setMessage(res.error ? `${t('common.failed')}: ${res.error}` : t('listeners.started'))
+      if (res.error) toast.push('error', `${t('common.failed')}: ${res.error}`)
+      else toast.push('success', t('listeners.started'))
       load()
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
     } finally {
       setStarting(false)
     }
   }
 
-  const stop = async (id: number) => {
+  const stop = async (j: Job) => {
+    setBusy(true)
     try {
-      const res = await api.stopListener(id)
-      setMessage(
-        res.error ? `${t('common.failed')}: ${res.error}` : t('listeners.stopped', { id }),
-      )
+      const res = await api.stopListener(j.ID)
+      if (res.error) toast.push('error', `${t('common.failed')}: ${res.error}`)
+      else toast.push('success', t('listeners.stopped', { id: j.ID }))
+      setStopping(null)
       load()
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -71,18 +80,6 @@ export default function ListenersPage() {
         </div>
       </div>
       {error && <div className="error-banner">{error}</div>}
-      {message && (
-        <div
-          className="error-banner"
-          style={{
-            borderColor: 'var(--green)',
-            color: 'var(--green)',
-            background: 'rgba(63,213,143,0.08)',
-          }}
-        >
-          {message}
-        </div>
-      )}
 
       <div className="card">
         <div className="card-title">{t('listeners.startTitle')}</div>
@@ -138,7 +135,13 @@ export default function ListenersPage() {
               </tr>
             )}
             {jobs.map((j) => (
-              <tr key={j.ID}>
+              <tr
+                key={j.ID}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setMenu({ x: e.clientX, y: e.clientY, job: j })
+                }}
+              >
                 <td className="mono">{j.ID}</td>
                 <td className="mono">{j.Name}</td>
                 <td>
@@ -147,7 +150,7 @@ export default function ListenersPage() {
                 <td className="mono">{j.Port}</td>
                 <td className="mono">{j.Domains?.join(', ') || '-'}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => stop(j.ID)}>
+                  <button className="btn sm danger" onClick={() => setStopping(j)}>
                     {t('listeners.stop')}
                   </button>
                 </td>
@@ -156,6 +159,35 @@ export default function ListenersPage() {
           </tbody>
         </table>
       </div>
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            {
+              label: t('listeners.stop'),
+              danger: true,
+              onSelect: () => setStopping(menu.job),
+            },
+          ]}
+        />
+      )}
+      <ConfirmDialog
+        open={!!stopping}
+        title={t('jobs.confirmStop')}
+        danger
+        busy={busy}
+        confirmLabel={t('listeners.stop')}
+        onConfirm={() => stopping && stop(stopping)}
+        onCancel={() => setStopping(null)}
+      >
+        <p>
+          {stopping
+            ? t('jobs.confirmStopBody', { name: stopping.Name || stopping.Protocol, id: stopping.ID })
+            : ''}
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import { base64ToBytes, triggerDownload } from '../lib/binary'
 import type { ImplantBuild, ImplantConfig, ImplantProfile } from '../lib/types'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useToast } from '../components/common/Toast'
 import './pages.css'
 
 const OS_ARCHES: { os: string; arches: string[] }[] = [
@@ -34,7 +36,19 @@ export default function ImplantsPage() {
   const [obfuscate, setObfuscate] = useState(true)
   const [debug, setDebug] = useState(false)
   const [evasion, setEvasion] = useState(false)
+  const [deleting, setDeleting] = useState<{ kind: 'build' | 'profile'; name: string } | null>(null)
+  const [busy, setBusy] = useState(false)
   const { t } = useTranslation()
+  const toast = useToast()
+
+  const osSummary = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const b of builds) {
+      const key = b.OS || 'unknown'
+      m.set(key, (m.get(key) || 0) + 1)
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1])
+  }, [builds])
 
   const load = async () => {
     try {
@@ -99,13 +113,16 @@ export default function ImplantsPage() {
   }
 
   const deleteProfile = async (p: ImplantProfile) => {
-    if (!window.confirm(t('profiles.confirmDelete', { name: p.Name }))) return
+    setBusy(true)
     try {
       await api.deleteImplantProfile(p.Name)
-      setMessage(t('profiles.deleted', { name: p.Name }))
+      setDeleting(null)
+      toast.push('success', t('profiles.deleted', { name: p.Name }))
       loadProfiles()
     } catch (e) {
-      setMessage(t('profiles.failed', { msg: (e as Error).message }))
+      toast.push('error', t('profiles.failed', { msg: (e as Error).message }))
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -185,14 +202,16 @@ export default function ImplantsPage() {
   }
 
   const deleteBuild = async (b: ImplantBuild) => {
-    if (!window.confirm(t('implants.confirmDelete', { name: b.Name }))) return
-    setMessage('')
+    setBusy(true)
     try {
       await api.deleteImplantBuild(b.Name)
-      setMessage(t('implants.deleted', { name: b.Name }))
+      setDeleting(null)
+      toast.push('success', t('implants.deleted', { name: b.Name }))
       load()
     } catch (e) {
-      setMessage(t('implants.failed', { msg: (e as Error).message }))
+      toast.push('error', t('implants.failed', { msg: (e as Error).message }))
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -220,6 +239,21 @@ export default function ImplantsPage() {
           }}
         >
           {message}
+        </div>
+      )}
+
+      {builds.length > 0 && (
+        <div className="dash-stats build-summary">
+          <button className="dash-stat" onClick={() => {}}>
+            <div className="dash-stat-value mono">{builds.length}</div>
+            <div className="dash-stat-label">{t('implants.totalBuilds')}</div>
+          </button>
+          {osSummary.map(([osName, count]) => (
+            <button key={osName} className="dash-stat" onClick={() => {}}>
+              <div className="dash-stat-value mono">{count}</div>
+              <div className="dash-stat-label">{osName}</div>
+            </button>
+          ))}
         </div>
       )}
 
@@ -374,7 +408,7 @@ export default function ImplantsPage() {
                       <button className="btn sm" onClick={() => loadProfile(p)}>
                         {t('profiles.load')}
                       </button>
-                      <button className="btn sm danger" onClick={() => deleteProfile(p)}>
+                      <button className="btn sm danger" onClick={() => setDeleting({ kind: 'profile', name: p.Name })}>
                         {t('profiles.delete')}
                       </button>
                     </div>
@@ -431,7 +465,7 @@ export default function ImplantsPage() {
                     <button className="btn sm" onClick={() => regenerateBuild(b)}>
                       {t('implants.regenerate')}
                     </button>
-                    <button className="btn sm danger" onClick={() => deleteBuild(b)}>
+                    <button className="btn sm danger" onClick={() => setDeleting({ kind: 'build', name: b.Name })}>
                       {t('profiles.delete')}
                     </button>
                   </div>
@@ -441,6 +475,26 @@ export default function ImplantsPage() {
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        open={!!deleting}
+        title={deleting?.kind === 'build' ? t('implants.confirmDelete') : t('profiles.confirmDelete')}
+        danger
+        busy={busy}
+        confirmLabel={t('profiles.delete')}
+        onConfirm={() => {
+          if (!deleting) return
+          if (deleting.kind === 'build') {
+            const b = builds.find((x) => x.Name === deleting.name)
+            if (b) deleteBuild(b)
+          } else {
+            const p = profiles.find((x) => x.Name === deleting.name)
+            if (p) deleteProfile(p)
+          }
+        }}
+        onCancel={() => setDeleting(null)}
+      >
+        <p>{deleting ? t('implants.confirmDeleteBody', { name: deleting.name }) : ''}</p>
+      </ConfirmDialog>
     </div>
   )
 }

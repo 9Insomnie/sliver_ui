@@ -137,6 +137,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/socks", s.handleSocksList)
 	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
 	mux.HandleFunc("DELETE /api/socks/{id}", s.handleSocksStop)
+
+	mux.HandleFunc("GET /api/loot", s.handleLootAll)
+	mux.HandleFunc("GET /api/loot/{id}", s.handleLootContent)
+	mux.HandleFunc("DELETE /api/loot/{id}", s.handleLootRemove)
 	mux.HandleFunc("GET /api/jobs", s.handleJobs)
 	mux.HandleFunc("GET /api/events", s.handleEvents)
 	mux.HandleFunc("GET /api/builders", s.handleBuilders)
