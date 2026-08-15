@@ -322,6 +322,16 @@ export interface PivotGraphEntry {
   Children: PivotGraphEntry[]
 }
 
+export interface SSHCommandResult {
+  StdOut: string
+  StdErr: string
+}
+
+export interface CallExtensionResult {
+  Output: string
+  ServerStore: boolean
+}
+
 export interface PortForward {
   LocalAddr: string
   LocalPort: number
