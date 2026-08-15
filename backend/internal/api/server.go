@@ -108,6 +108,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/make-token", s.handleMakeToken)
 	mux.HandleFunc("POST /api/sessions/{id}/rev-to-self", s.handleRevToSelf)
 	mux.HandleFunc("POST /api/sessions/{id}/getsystem", s.handleGetSystem)
+	mux.HandleFunc("GET /api/sessions/{id}/privs", s.handleGetPrivs)
+	mux.HandleFunc("GET /api/sessions/{id}/token-owner", s.handleCurrentTokenOwner)
+	mux.HandleFunc("POST /api/sessions/{id}/execute-token", s.handleExecuteToken)
+	mux.HandleFunc("POST /api/sessions/{id}/runas", s.handleRunAs)
 	mux.HandleFunc("POST /api/sessions/{id}/ping", s.handlePing)
 
 	mux.HandleFunc("GET /api/sessions/{id}/reg/subkeys", s.handleRegSubKeys)

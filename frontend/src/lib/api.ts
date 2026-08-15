@@ -25,6 +25,7 @@ import type {
   WGClientConfig,
   WGTCPForwarder,
   WGSocksServer,
+  WindowsPrivilege,
 } from './types'
 
 const BASE = '/api'
@@ -414,6 +415,25 @@ export const api = {
       `/sessions/${encodeURIComponent(sessionId)}/wg/socks/${id}`,
       { method: 'DELETE' },
     ),
+
+  // --- Privilege escalation ---
+  getPrivs: (sessionId: string) =>
+    request<{ privileges: WindowsPrivilege[] }>(`/sessions/${encodeURIComponent(sessionId)}/privs`),
+
+  currentTokenOwner: (sessionId: string) =>
+    request<{ owner: string }>(`/sessions/${encodeURIComponent(sessionId)}/token-owner`),
+
+  executeToken: (sessionId: string, path: string, args: string[], output: boolean) =>
+    request<ExecResult>(`/sessions/${encodeURIComponent(sessionId)}/execute-token`, {
+      method: 'POST',
+      body: JSON.stringify({ path, args, output }),
+    }),
+
+  runAs: (sessionId: string, username: string, processName: string, args: string) =>
+    request<{ output: string; async: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/runas`, {
+      method: 'POST',
+      body: JSON.stringify({ username, process_name: processName, args }),
+    }),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {
