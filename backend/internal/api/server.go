@@ -153,6 +153,15 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("DELETE /api/websites/{name}/content", s.handleWebsiteRemoveContent)
 	mux.HandleFunc("DELETE /api/websites/{name}", s.handleWebsiteRemove)
 
+	mux.HandleFunc("GET /api/wg/config", s.handleWGClientConfig)
+	mux.HandleFunc("GET /api/wg/ip", s.handleWGUniqueIP)
+	mux.HandleFunc("GET /api/sessions/{id}/wg/forwarders", s.handleWGForwarders)
+	mux.HandleFunc("POST /api/sessions/{id}/wg/forwarders", s.handleWGStartPortForward)
+	mux.HandleFunc("DELETE /api/sessions/{id}/wg/forwarders/{fwdID}", s.handleWGStopPortForward)
+	mux.HandleFunc("GET /api/sessions/{id}/wg/socks", s.handleWGSocksServers)
+	mux.HandleFunc("POST /api/sessions/{id}/wg/socks", s.handleWGStartSocks)
+	mux.HandleFunc("DELETE /api/sessions/{id}/wg/socks/{serverID}", s.handleWGStopSocks)
+
 	mux.HandleFunc("GET /api/socks", s.handleSocksList)
 	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
 	mux.HandleFunc("DELETE /api/socks/{id}", s.handleSocksStop)

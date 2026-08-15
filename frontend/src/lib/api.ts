@@ -22,6 +22,9 @@ import type {
   CompilerInfo,
   Host,
   Website,
+  WGClientConfig,
+  WGTCPForwarder,
+  WGSocksServer,
 } from './types'
 
 const BASE = '/api'
@@ -376,6 +379,41 @@ export const api = {
 
   websiteRemove: (name: string) =>
     request<{ success: boolean }>(`/websites/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
+  // --- WireGuard ---
+  wgClientConfig: () => request<WGClientConfig>('/wg/config'),
+
+  wgUniqueIP: () => request<{ ip: string }>('/wg/ip'),
+
+  wgForwarders: (sessionId: string) =>
+    request<{ forwarders: WGTCPForwarder[] }>(`/sessions/${encodeURIComponent(sessionId)}/wg/forwarders`),
+
+  wgStartPortForward: (sessionId: string, localPort: number, remoteAddress: string) =>
+    request<{ forwarder: WGTCPForwarder; async: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/wg/forwarders`, {
+      method: 'POST',
+      body: JSON.stringify({ local_port: localPort, remote_address: remoteAddress }),
+    }),
+
+  wgStopPortForward: (sessionId: string, id: number) =>
+    request<{ forwarder: WGTCPForwarder; async: boolean }>(
+      `/sessions/${encodeURIComponent(sessionId)}/wg/forwarders/${id}`,
+      { method: 'DELETE' },
+    ),
+
+  wgSocksServers: (sessionId: string) =>
+    request<{ servers: WGSocksServer[] }>(`/sessions/${encodeURIComponent(sessionId)}/wg/socks`),
+
+  wgStartSocks: (sessionId: string, port: number) =>
+    request<{ server: WGSocksServer; async: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/wg/socks`, {
+      method: 'POST',
+      body: JSON.stringify({ port }),
+    }),
+
+  wgStopSocks: (sessionId: string, id: number) =>
+    request<{ server: WGSocksServer; async: boolean }>(
+      `/sessions/${encodeURIComponent(sessionId)}/wg/socks/${id}`,
+      { method: 'DELETE' },
+    ),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {
