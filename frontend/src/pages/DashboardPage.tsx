@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
+import { useConnection } from '../lib/connection'
 import type { Session, Job, Event } from '../lib/types'
 import './pages.css'
 
@@ -29,27 +30,22 @@ function badgeClass(type: string): string {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [counts, setCounts] = useState({ sessions: 0, beacons: 0, jobs: 0, builders: 0, socks: 0 })
+  const { connected, counts } = useConnection()
   const [sessions, setSessions] = useState<Session[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [connected, setConnected] = useState(false)
   const [error, setError] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    if (!connected) {
+      setSessions([])
+      setJobs([])
+      setEvents([])
+      return
+    }
+    setError('')
     try {
-      setError('')
-      const info = await api.info()
-      setConnected(!!info.connected)
-      if (!info.connected) {
-        setCounts({ sessions: 0, beacons: 0, jobs: 0, builders: 0, socks: 0 })
-        setSessions([])
-        setJobs([])
-        setEvents([])
-        return
-      }
-      const [ov, ss, js] = await Promise.all([api.overview(), api.sessions(), api.jobs()])
-      setCounts(ov.counts)
+      const [ss, js] = await Promise.all([api.sessions(), api.jobs()])
       setSessions(ss.sessions || [])
       setJobs(js.jobs || [])
       try {
@@ -61,13 +57,13 @@ export default function DashboardPage() {
     } catch (e) {
       setError((e as Error).message)
     }
-  }
+  }, [connected])
 
   useEffect(() => {
     load()
     const timer = setInterval(load, 5000)
     return () => clearInterval(timer)
-  }, [])
+  }, [load])
 
   const statCards: { label: string; value: number; to: string }[] = [
     { label: t('dashboard.sessions'), value: counts.sessions, to: '/sessions' },

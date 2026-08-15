@@ -294,9 +294,9 @@ export default function ImplantsPage() {
             <label>{t('implants.format')}</label>
             <select value={format} onChange={(e) => setFormat(e.target.value)}>
               <option value="exe">EXE</option>
-              <option value="service">Service</option>
-              <option value="shellcode">Shellcode</option>
-              <option value="shared">Shared Library</option>
+              <option value="service">{t('implants.formatService')}</option>
+              <option value="shellcode">{t('implants.formatShellcode')}</option>
+              <option value="shared">{t('implants.formatShared')}</option>
             </select>
           </div>
           <div className="field">

@@ -57,9 +57,9 @@ export default function TokensTab({ sessionId, os }: { sessionId: string; os: st
         <div className="field">
           <label>{t('tokens.action')}</label>
           <select value={action} onChange={(e) => setAction(e.target.value as typeof action)}>
-            <option value="impersonate">Impersonate</option>
-            <option value="makeToken">Make Token</option>
-            <option value="getSystem">GetSystem</option>
+            <option value="impersonate">{t('tokens.modeImpersonate')}</option>
+            <option value="makeToken">{t('tokens.modeMakeToken')}</option>
+            <option value="getSystem">{t('tokens.modeGetSystem')}</option>
           </select>
         </div>
         {(action === 'impersonate' || action === 'makeToken') && (

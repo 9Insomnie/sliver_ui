@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
+import { useConnection } from '../lib/connection'
 import './pages.css'
 
 export default function SettingsPage() {
+  const { connected, version, refresh } = useConnection()
   const [profiles, setProfiles] = useState<string[]>([])
   const [activeProfile, setActiveProfile] = useState('')
-  const [message, setMessage] = useState('')
-  const [connected, setConnected] = useState(false)
-  const [version, setVersion] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [profileName, setProfileName] = useState('local')
   const [lhost, setLhost] = useState('')
   const [lport, setLport] = useState(0)
@@ -20,70 +21,64 @@ export default function SettingsPage() {
       const data = await api.listProfiles()
       setProfiles(data.profiles || [])
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
-    }
-  }
-
-  const refreshInfo = async () => {
-    try {
-      const d = await api.info()
-      setConnected(!!d.connected)
-      setVersion(d.version || '')
-    } catch (e) {
-      setConnected(false)
-      setVersion('')
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      setError(`${t('common.failed')}: ${(e as Error).message}`)
     }
   }
 
   useEffect(() => {
     loadProfiles()
-    refreshInfo()
   }, [])
 
   const useProfile = async (name: string) => {
     setLoadingProfiles(true)
-    setMessage('')
+    setError('')
+    setSuccess('')
     try {
       const res = await api.useProfile(name)
-      setMessage(
-        res.error
-          ? `${t('common.failed')}: ${res.error}`
-          : t('settings.usingProfile', { name }),
-      )
+      if (res.error) {
+        setError(`${t('common.failed')}: ${res.error}`)
+      } else {
+        setSuccess(t('settings.usingProfile', { name }))
+      }
       setActiveProfile(name)
-      refreshInfo()
+      refresh()
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      setError(`${t('common.failed')}: ${(e as Error).message}`)
     } finally {
       setLoadingProfiles(false)
     }
   }
 
   const connect = async () => {
-    setMessage('')
+    setError('')
+    setSuccess('')
     try {
       const res = await api.connect({
         name: profileName,
         lhost,
         lport,
       })
-      setMessage(res.error ? `${t('common.failed')}: ${res.error}` : t('settings.connectedMsg'))
-      refreshInfo()
+      if (res.error) {
+        setError(`${t('common.failed')}: ${res.error}`)
+      } else {
+        setSuccess(t('settings.connectedMsg'))
+      }
+      refresh()
       loadProfiles()
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      setError(`${t('common.failed')}: ${(e as Error).message}`)
     }
   }
 
   const disconnect = async () => {
-    setMessage('')
+    setError('')
+    setSuccess('')
     try {
       await api.disconnect()
-      setMessage(t('settings.disconnectedMsg'))
-      refreshInfo()
+      setSuccess(t('settings.disconnectedMsg'))
+      refresh()
     } catch (e) {
-      setMessage(`${t('common.failed')}: ${(e as Error).message}`)
+      setError(`${t('common.failed')}: ${(e as Error).message}`)
     }
   }
 
@@ -166,7 +161,8 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {message && (
+      {error && <div className="error-banner">{error}</div>}
+      {success && (
         <div
           className="error-banner"
           style={{
@@ -175,7 +171,7 @@ export default function SettingsPage() {
             background: 'rgba(63,213,143,0.08)',
           }}
         >
-          {message}
+          {success}
         </div>
       )}
     </div>

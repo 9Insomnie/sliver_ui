@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { base64ToBytes, bytesToText, triggerDownload } from '../../lib/binary'
 import type { DirView } from '../../lib/types'
+import ConfirmDialog from '../common/ConfirmDialog'
 import '../../pages/pages.css'
 
 function fmtSize(size: number): string {
@@ -31,6 +32,9 @@ export default function FilesTab({
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [viewing, setViewing] = useState<{ name: string; data: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<{ name: string; isDir: boolean } | null>(null)
+  const [recursive, setRecursive] = useState(false)
+  const [busy, setBusy] = useState(false)
   const uploadRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(
@@ -109,14 +113,16 @@ export default function FilesTab({
     e.target.value = ''
   }
 
-  const remove = async (name: string, isDir: boolean) => {
-    if (!window.confirm(t('files.confirmDelete', { name }))) return
-    const recursive = isDir ? window.confirm(t('files.recursive')) : false
+  const remove = async (name: string) => {
+    setBusy(true)
     try {
       await api.fsRm(sessionId, joinPath(path, name), recursive)
+      setConfirmDelete(null)
       refresh()
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -246,7 +252,13 @@ export default function FilesTab({
                     <button className="btn sm" onClick={() => rename(f.Name)}>
                       {t('files.rename')}
                     </button>
-                    <button className="btn sm danger" onClick={() => remove(f.Name, f.IsDir)}>
+                    <button
+                      className="btn sm danger"
+                      onClick={() => {
+                        setRecursive(false)
+                        setConfirmDelete({ name: f.Name, isDir: f.IsDir })
+                      }}
+                    >
                       {t('files.delete')}
                     </button>
                   </div>
@@ -270,6 +282,28 @@ export default function FilesTab({
           <pre>{bytesToText(viewing.data)}</pre>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={t('files.confirmDeleteTitle')}
+        danger
+        busy={busy}
+        confirmLabel={t('files.delete')}
+        onConfirm={() => confirmDelete && remove(confirmDelete.name)}
+        onCancel={() => setConfirmDelete(null)}
+      >
+        <p>{confirmDelete ? t('files.confirmDelete', { name: confirmDelete.name }) : ''}</p>
+        {confirmDelete?.isDir && (
+          <label className="fs-recursive" style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
+            <input
+              type="checkbox"
+              checked={recursive}
+              onChange={(e) => setRecursive(e.target.checked)}
+            />
+            <span>{t('files.recursive')}</span>
+          </label>
+        )}
+      </ConfirmDialog>
     </div>
   )
 }

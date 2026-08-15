@@ -2,8 +2,7 @@ import type { ReactNode } from 'react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api } from './lib/api'
-import type { ServerInfo, OverviewCounts } from './lib/types'
+import { ConnectionProvider, useConnection } from './lib/connection'
 import { GROUPED_NAV, FAVORITES_NAV, ICONS } from './lib/nav'
 import DashboardPage from './pages/DashboardPage'
 import SessionsPage from './pages/SessionsPage'
@@ -27,46 +26,12 @@ import CommandPalette from './components/CommandPalette'
 import { ToastProvider } from './components/common/Toast'
 import './App.css'
 
-const EMPTY_COUNTS: OverviewCounts = { sessions: 0, beacons: 0, jobs: 0, builders: 0, socks: 0 }
-
 export default function App() {
-  const [info, setInfo] = useState<ServerInfo | null>(null)
-  const [counts, setCounts] = useState<OverviewCounts>(EMPTY_COUNTS)
+  const { connected, version, counts } = useConnection()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-
-  useEffect(() => {
-    let cancelled = false
-    const refresh = async () => {
-      let current
-      try {
-        current = await api.info()
-      } catch {
-        if (!cancelled) setInfo({ version: '', connected: false })
-        return
-      }
-      if (cancelled) return
-      setInfo({ version: current.version || '', connected: !!current.connected })
-      if (!current.connected) {
-        setCounts(EMPTY_COUNTS)
-        return
-      }
-      try {
-        const ov = await api.overview()
-        if (!cancelled) setCounts(ov.counts)
-      } catch {
-        // A timeout while collecting badges must not make the server appear disconnected.
-      }
-    }
-    refresh()
-    const timer = setInterval(refresh, 5000)
-    return () => {
-      cancelled = true
-      clearInterval(timer)
-    }
-  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -191,7 +156,8 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <div className="app">
+      <ConnectionProvider>
+        <div className="app">
         <aside className="sidebar">
         <div className="logo">
           <span className="logo-mark">
@@ -234,10 +200,10 @@ export default function App() {
 
         <div className="sidebar-footer">
           <div className="conn-status">
-            <span className={`dot ${info?.connected ? 'ok' : 'bad'}`} />
+            <span className={`dot ${connected ? 'ok' : 'bad'}`} />
             <span>
-              {info?.connected
-                ? t('app.connected', { version: info.version })
+              {connected
+                ? t('app.connected', { version })
                 : t('app.notConnected')}
             </span>
           </div>
@@ -264,16 +230,16 @@ export default function App() {
               <span className="topbar-search-label">{t('app.search')}</span>
               <kbd className="kbd">⌘K</kbd>
             </button>
-            <div className={`server-status ${info?.connected ? 'ok' : 'bad'}`}>
-              <span className={`dot ${info?.connected ? 'ok' : 'bad'}`} />
+            <div className={`server-status ${connected ? 'ok' : 'bad'}`}>
+              <span className={`dot ${connected ? 'ok' : 'bad'}`} />
               <span className="server-status-text">
-                {info?.connected ? t('status.connected') : t('status.disconnected')}
+                {connected ? t('status.connected') : t('status.disconnected')}
               </span>
             </div>
           </div>
         </header>
         <main className="content">
-          {info && !info.connected && (
+          {!connected && (
             <div className="offline-banner">
               <span className="dot bad" />
               <span>{t('app.offline')}</span>
@@ -304,6 +270,7 @@ export default function App() {
       </div>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onToggleLang={toggleLang} />
+      </ConnectionProvider>
     </ToastProvider>
   )
 }

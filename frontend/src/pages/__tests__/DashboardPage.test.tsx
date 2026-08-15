@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from '../../pages/DashboardPage'
+import { ConnectionProvider } from '../../lib/connection'
 import { api } from '../../lib/api'
 import type { Session } from '../../lib/types'
 
@@ -31,7 +32,9 @@ const session = {
 function renderPage() {
   const view = render(
     <MemoryRouter>
-      <DashboardPage />
+      <ConnectionProvider>
+        <DashboardPage />
+      </ConnectionProvider>
     </MemoryRouter>,
   )
   return view
@@ -59,15 +62,15 @@ describe('DashboardPage', () => {
     view.unmount()
   })
 
-  it('keeps the connected state when overview collection fails', async () => {
+  it('stays connected when overview collection fails', async () => {
     mockedApi.info.mockResolvedValue({ version: '1.15.16', connected: true })
     mockedApi.overview.mockRejectedValue(new Error('overview timed out'))
     mockedApi.sessions.mockResolvedValue({ sessions: [] })
     mockedApi.jobs.mockResolvedValue({ jobs: [] })
 
     const view = renderPage()
-    await waitFor(() => expect(screen.getByText('overview timed out')).toBeInTheDocument())
-    expect(screen.getByText('Sliver C2 operations at a glance')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Sliver C2 operations at a glance')).toBeInTheDocument())
+    expect(screen.queryByText('Not connected to Sliver server')).not.toBeInTheDocument()
     view.unmount()
   })
 
