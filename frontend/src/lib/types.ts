@@ -332,6 +332,12 @@ export interface CallExtensionResult {
   ServerStore: boolean
 }
 
+export interface MsfStager {
+  FileName: string
+  DataB64: string
+  Size: number
+}
+
 export interface PortForward {
   LocalAddr: string
   LocalPort: number

