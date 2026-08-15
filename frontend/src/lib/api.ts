@@ -30,6 +30,7 @@ import type {
   PivotGraphEntry,
   SSHCommandResult,
   CallExtensionResult,
+  MsfStager,
 } from './types'
 
 const BASE = '/api'
@@ -494,6 +495,25 @@ export const api = {
 
   callExtension: (sessionId: string, opts: { name: string; export: string; server_store?: boolean; args_b64?: string }) =>
     request<CallExtensionResult>(`/sessions/${encodeURIComponent(sessionId)}/extensions/call`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  // --- Metasploit ---
+  msf: (sessionId: string, opts: { payload: string; lhost: string; lport: number; encoder?: string; iterations?: number }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/msf`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  msfRemote: (sessionId: string, opts: { payload: string; lhost: string; lport: number; encoder?: string; iterations?: number; pid: number }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/msf/remote`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  msfStage: (opts: { arch: string; format: string; port: number; host: string; os: string; protocol: string; bad_chars: string[] }) =>
+    request<MsfStager>(`/msf/stage`, {
       method: 'POST',
       body: JSON.stringify(opts),
     }),

@@ -123,6 +123,9 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}/extensions", s.handleListExtensions)
 	mux.HandleFunc("POST /api/sessions/{id}/extensions/register", s.handleRegisterExtension)
 	mux.HandleFunc("POST /api/sessions/{id}/extensions/call", s.handleCallExtension)
+	mux.HandleFunc("POST /api/sessions/{id}/msf", s.handleMsf)
+	mux.HandleFunc("POST /api/sessions/{id}/msf/remote", s.handleMsfRemote)
+	mux.HandleFunc("POST /api/msf/stage", s.handleMsfStage)
 	mux.HandleFunc("POST /api/sessions/{id}/ping", s.handlePing)
 
 	mux.HandleFunc("GET /api/sessions/{id}/reg/subkeys", s.handleRegSubKeys)
