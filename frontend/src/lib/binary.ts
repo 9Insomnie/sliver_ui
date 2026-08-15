@@ -6,7 +6,7 @@ export function base64ToBytes(b64: string): ArrayBuffer {
 }
 
 export function triggerDownload(name: string, bytes: ArrayBuffer) {
-  const blob = new Blob([bytes])
+  const blob = new Blob([bytes], { type: 'application/octet-stream' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
