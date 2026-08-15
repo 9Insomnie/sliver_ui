@@ -1,0 +1,3 @@
+# Kept so the go:embed directive in web.go has a directory to reference
+# even before a production frontend build. Real assets are copied here by
+# `make frontend-build`.
