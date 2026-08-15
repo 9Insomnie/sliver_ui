@@ -167,6 +167,11 @@ export const ICONS: Record<string, ReactNode> = {
       <path d="M12 2.5 14.94 8.5 21.5 9.46l-4.75 4.62L17.88 21 12 17.77 6.12 21l1.13-6.92L2.5 9.46 9.06 8.5 12 2.5z" />
     </svg>
   ),
+  aliases: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  ),
 }
 
 // 分组导航 — Viper 风格信息架构
@@ -194,6 +199,7 @@ export const GROUPED_NAV: NavSection[] = [
       { path: '/tasks', key: 'tasks', icon: ICONS.tasks },
       { path: '/loot', key: 'loot', icon: ICONS.loot },
       { path: '/canaries', key: 'canaries', icon: ICONS.canaries },
+      { path: '/aliases', key: 'aliases', icon: ICONS.aliases },
     ],
   },
   {

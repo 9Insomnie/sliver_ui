@@ -35,6 +35,7 @@ export default function SessionsPage() {
   const [killing, setKilling] = useState<Session | null>(null)
   const [busy, setBusy] = useState(false)
   const [selected, setSelected] = useState<Session | null>(null)
+  const [pruning, setPruning] = useState(false)
   const navigate = useNavigate()
   const { t } = useTranslation()
   const toast = useToast()
@@ -100,6 +101,19 @@ export default function SessionsPage() {
       toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
     } finally {
       setBusy(false)
+    }
+  }
+
+  const prune = async () => {
+    setPruning(true)
+    try {
+      const res = await api.pruneSessions()
+      toast.push('success', t('sessions.pruned', { count: res.pruned }))
+      load()
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setPruning(false)
     }
   }
 
@@ -176,6 +190,9 @@ export default function SessionsPage() {
             <kbd className="kbd">T</kbd> {t('common.terminal')}
             <kbd className="kbd">F</kbd> {t('sessions.open')}
           </span>
+          <button className="btn" onClick={prune} disabled={pruning}>
+            {pruning ? t('common.loading') : t('sessions.prune')}
+          </button>
           <button className="btn" onClick={load}>
             {t('common.refresh')}
           </button>

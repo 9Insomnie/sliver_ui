@@ -149,6 +149,13 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/portfwd", s.handlePortfwdStart)
 	mux.HandleFunc("DELETE /api/portfwd/{port}", s.handlePortfwdStop)
 
+	mux.HandleFunc("POST /api/beacons/prune", s.handlePruneBeacons)
+	mux.HandleFunc("POST /api/sessions/prune", s.handlePruneSessions)
+	mux.HandleFunc("GET /api/aliases", s.handleAliases)
+	mux.HandleFunc("POST /api/aliases", s.handleAliasInstall)
+	mux.HandleFunc("DELETE /api/aliases/{name}", s.handleAliasRemove)
+	mux.HandleFunc("POST /api/sessions/{id}/aliases/{name}/run", s.handleAliasRun)
+
 	mux.HandleFunc("GET /api/beacons", s.handleBeacons)
 	mux.HandleFunc("GET /api/beacons/{id}", s.handleBeacon)
 	mux.HandleFunc("POST /api/beacons/{id}/rename", s.handleRenameBeacon)

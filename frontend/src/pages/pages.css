@@ -1069,3 +1069,43 @@ table.data tbody tr:last-child td {
   font-weight: 500;
   border-bottom: 1px solid rgba(255, 179, 71, 0.25);
 }
+
+.platform-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.prune-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}
+
+.prune-control input {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.run-meta {
+  margin-top: 10px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.run-output {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow: auto;
+}

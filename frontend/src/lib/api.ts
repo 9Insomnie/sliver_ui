@@ -32,6 +32,7 @@ import type {
   CallExtensionResult,
   MsfStager,
   Canary,
+  Alias,
 } from './types'
 
 const BASE = '/api'
@@ -552,6 +553,34 @@ export const api = {
 
   // --- DNS canaries ---
   canaries: () => request<{ canaries: Canary[] }>('/canaries'),
+
+  // --- Prune ---
+  pruneBeacons: (days: number) =>
+    request<{ success: boolean; pruned: number }>('/beacons/prune', {
+      method: 'POST',
+      body: JSON.stringify({ days }),
+    }),
+
+  pruneSessions: () =>
+    request<{ success: boolean; pruned: number }>('/sessions/prune', { method: 'POST' }),
+
+  // --- Aliases ---
+  aliases: () => request<{ aliases: Alias[] }>('/aliases'),
+
+  aliasInstall: (bundleB64: string) =>
+    request<{ success: boolean; alias: Alias }>('/aliases', {
+      method: 'POST',
+      body: JSON.stringify({ bundle_b64: bundleB64 }),
+    }),
+
+  aliasRemove: (name: string) =>
+    request<{ success: boolean }>(`/aliases/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+
+  aliasRun: (sessionId: string, name: string, opts: { args?: string; process?: string; arch?: string; method?: string; class?: string }) =>
+    request<{ success: boolean; output: string; mode: string; command: string; args: string; process: string; platform: string }>(
+      `/sessions/${encodeURIComponent(sessionId)}/aliases/${encodeURIComponent(name)}/run`,
+      { method: 'POST', body: JSON.stringify(opts) },
+    ),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {
