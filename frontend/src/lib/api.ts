@@ -20,6 +20,7 @@ import type {
   OverviewData,
   LootEntry,
   CompilerInfo,
+  Host,
 } from './types'
 
 const BASE = '/api'
@@ -337,6 +338,17 @@ export const api = {
   getOperators: () => request<{ operators: { name: string; online: boolean }[] }>('/operators'),
 
   compiler: () => request<CompilerInfo>('/compiler'),
+
+  hosts: () => request<{ hosts: Host[] }>('/hosts'),
+
+  host: (uuid: string) => request<Host>(`/hosts/${encodeURIComponent(uuid)}`),
+
+  hostRemove: (uuid: string) => request<{ success: boolean }>(`/hosts/${encodeURIComponent(uuid)}`, { method: 'DELETE' }),
+
+  hostIOCRm: (uuid: string, iocId: string) =>
+    request<{ success: boolean }>(`/hosts/${encodeURIComponent(uuid)}/iocs/${encodeURIComponent(iocId)}`, {
+      method: 'DELETE',
+    }),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {

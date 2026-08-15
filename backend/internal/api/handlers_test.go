@@ -57,6 +57,10 @@ func TestEndpointsRequireClient(t *testing.T) {
 		{"session close", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/close", nil)},
 		{"monitor start", httptest.NewRequest(http.MethodPost, "/api/monitor/start", nil)},
 		{"monitor stop", httptest.NewRequest(http.MethodPost, "/api/monitor/stop", nil)},
+		{"hosts list", httptest.NewRequest(http.MethodGet, "/api/hosts", nil)},
+		{"host single", httptest.NewRequest(http.MethodGet, "/api/hosts/h-1", nil)},
+		{"host rm", httptest.NewRequest(http.MethodDelete, "/api/hosts/h-1", nil)},
+		{"host ioc rm", httptest.NewRequest(http.MethodDelete, "/api/hosts/h-1/iocs/ioc-1", nil)},
 	}
 
 	for _, tt := range tests {

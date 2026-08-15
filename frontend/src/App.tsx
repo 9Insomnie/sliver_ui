@@ -20,6 +20,7 @@ import FilesPage from './pages/FilesPage'
 import ProcessesPage from './pages/ProcessesPage'
 import NetworkPage from './pages/NetworkPage'
 import EventsPage from './pages/EventsPage'
+import HostsPage from './pages/HostsPage'
 import SettingsPage from './pages/SettingsPage'
 import Logo from './components/Logo'
 import CommandPalette from './components/CommandPalette'
@@ -261,6 +262,7 @@ export default function App() {
               <Route path="/processes" element={<ProcessesPage />} />
               <Route path="/network" element={<NetworkPage />} />
               <Route path="/events" element={<EventsPage />} />
+              <Route path="/hosts" element={<HostsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/sessions/:id" element={<SessionDetailPage />} />
               <Route path="/sessions/:id/terminal" element={<TerminalPage />} />
