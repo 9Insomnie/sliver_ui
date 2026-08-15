@@ -31,6 +31,7 @@ import type {
   SSHCommandResult,
   CallExtensionResult,
   MsfStager,
+  Canary,
 } from './types'
 
 const BASE = '/api'
@@ -536,6 +537,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(opts),
     }),
+
+  // --- DNS canaries ---
+  canaries: () => request<{ canaries: Canary[] }>('/canaries'),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {

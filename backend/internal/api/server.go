@@ -173,6 +173,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("PUT /api/websites/{name}/content", s.handleWebsiteUpdateContent)
 	mux.HandleFunc("DELETE /api/websites/{name}/content", s.handleWebsiteRemoveContent)
 	mux.HandleFunc("DELETE /api/websites/{name}", s.handleWebsiteRemove)
+	mux.HandleFunc("GET /api/canaries", s.handleCanaries)
 
 	mux.HandleFunc("GET /api/wg/config", s.handleWGClientConfig)
 	mux.HandleFunc("GET /api/wg/ip", s.handleWGUniqueIP)

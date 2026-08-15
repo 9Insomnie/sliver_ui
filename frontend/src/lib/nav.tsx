@@ -77,6 +77,14 @@ export const ICONS: Record<string, ReactNode> = {
       <path d="M12 12v4" />
     </svg>
   ),
+  canaries: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 14h18" />
+      <path d="M3 17h10" />
+      <path d="M5 11V8a7 7 0 0 1 14 0v3" />
+      <circle cx="19.5" cy="16.5" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  ),
   files: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z" />
@@ -185,6 +193,7 @@ export const GROUPED_NAV: NavSection[] = [
       { path: '/jobs', key: 'jobs', icon: ICONS.jobs },
       { path: '/tasks', key: 'tasks', icon: ICONS.tasks },
       { path: '/loot', key: 'loot', icon: ICONS.loot },
+      { path: '/canaries', key: 'canaries', icon: ICONS.canaries },
     ],
   },
   {
