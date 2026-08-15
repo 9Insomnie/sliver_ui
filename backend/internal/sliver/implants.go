@@ -58,7 +58,7 @@ type ImplantBuildView struct {
 	Arch          string             `json:"Arch"`
 }
 
-func configToView(c *clientpb.ImplantConfig) *ImplantConfigView {
+func configToView(c *clientpb.ImplantConfig, name string) *ImplantConfigView {
 	if c == nil {
 		return nil
 	}
@@ -75,7 +75,7 @@ func configToView(c *clientpb.ImplantConfig) *ImplantConfigView {
 		}{URL: u.URL})
 	}
 	return &ImplantConfigView{
-		Name:        c.Name,
+		Name:        name,
 		OS:          c.GOOS,
 		Arch:        c.GOARCH,
 		Format:      c.Format.String(),
@@ -107,7 +107,7 @@ func (c *Client) ImplantBuilds() ([]ImplantBuildView, error) {
 		}
 		out = append(out, ImplantBuildView{
 			Name:          name,
-			ImplantConfig: configToView(cfg),
+			ImplantConfig: configToView(cfg, name),
 			OS:            cfg.GOOS,
 			Arch:          cfg.GOARCH,
 		})
@@ -158,7 +158,7 @@ func (c *Client) ImplantProfiles() ([]ImplantProfileView, error) {
 		if p == nil {
 			continue
 		}
-		out = append(out, ImplantProfileView{Name: p.Name, Config: configToView(p.Config)})
+		out = append(out, ImplantProfileView{Name: p.Name, Config: configToView(p.Config, p.Name)})
 	}
 	return out, nil
 }
@@ -176,10 +176,29 @@ func (c *Client) SaveImplantProfile(name string, req *GenerateRequest, isBeacon 
 }
 
 // DeleteImplantProfile removes a saved implant profile.
+//
+// Guard: sliver-server v1.15.16's DeleteImplantProfile RPC panics (nil
+// dereference in db.ProfileByName) when the named profile does not exist,
+// taking the whole server down. Verify the profile exists first and never
+// forward the delete RPC for an unknown name.
 func (c *Client) DeleteImplantProfile(name string) error {
+	profiles, err := c.ImplantProfiles()
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, p := range profiles {
+		if p.Name == name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("implant profile %q not found", name)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	_, err := c.RPC.DeleteImplantProfile(ctx, &clientpb.DeleteReq{Name: name})
+	_, err = c.RPC.DeleteImplantProfile(ctx, &clientpb.DeleteReq{Name: name})
 	return err
 }
 
@@ -206,7 +225,6 @@ func buildImplantConfig(req *GenerateRequest, isBeacon bool) *clientpb.ImplantCo
 	}
 
 	cfg := &clientpb.ImplantConfig{
-		Name:             req.Name,
 		GOOS:             req.OS,
 		GOARCH:           req.Arch,
 		Format:           format,
@@ -216,6 +234,13 @@ func buildImplantConfig(req *GenerateRequest, isBeacon bool) *clientpb.ImplantCo
 		IsBeacon:         isBeacon,
 		BeaconInterval:   req.Interval,
 		BeaconJitter:     req.Jitter,
+		ConnectionStrategy: "sequential",
+	}
+	if isBeacon {
+		cfg.BeaconInterval = req.Interval
+		cfg.BeaconJitter = req.Jitter
+	} else {
+		cfg.ReconnectInterval = req.Interval
 	}
 	if req.MaxErrors != 0 {
 		cfg.MaxConnectionErrors = uint32(req.MaxErrors)
@@ -227,10 +252,22 @@ func buildImplantConfig(req *GenerateRequest, isBeacon bool) *clientpb.ImplantCo
 		if c2.Address == "" {
 			continue
 		}
-		cfg.C2 = append(cfg.C2, &clientpb.ImplantC2{URL: buildC2URL(c2.Address, c2.Protocol)})
+		url := buildC2URL(c2.Address, c2.Protocol)
+		cfg.C2 = append(cfg.C2, &clientpb.ImplantC2{URL: url})
+		switch {
+		case strings.HasPrefix(url, "mtls://"):
+			cfg.IncludeMTLS = true
+		case strings.HasPrefix(url, "http://"), strings.HasPrefix(url, "https://"):
+			cfg.IncludeHTTP = true
+		case strings.HasPrefix(url, "dns://"):
+			cfg.IncludeDNS = true
+		case strings.HasPrefix(url, "wg://"):
+			cfg.IncludeWG = true
+		}
 	}
 	if len(cfg.C2) == 0 {
 		cfg.C2 = append(cfg.C2, &clientpb.ImplantC2{URL: "mtls://127.0.0.1:8888"})
+		cfg.IncludeMTLS = true
 	}
 	return cfg
 }
@@ -244,7 +281,7 @@ func (c *Client) GenerateImplant(req *GenerateRequest) (map[string]any, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	resp, err := c.RPC.Generate(ctx, &clientpb.GenerateReq{Config: cfg})
+	resp, err := c.RPC.Generate(ctx, &clientpb.GenerateReq{Config: cfg, Name: req.Name})
 	if err != nil {
 		return nil, err
 	}

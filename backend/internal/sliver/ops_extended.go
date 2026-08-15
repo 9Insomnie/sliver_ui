@@ -24,7 +24,7 @@ func (c *Client) ExecuteAssembly(sessionID string, assembly []byte, arguments, p
 	defer cancel()
 	resp, err := c.RPC.ExecuteAssembly(ctx, &sliverpb.ExecuteAssemblyReq{
 		Assembly:  assembly,
-		Arguments: arguments,
+		Arguments: []string{arguments},
 		Process:   process,
 		Request:   &commonpb.Request{SessionID: sessionID},
 	})
@@ -48,7 +48,7 @@ func (c *Client) Sideload(sessionID string, data []byte, processName, args, entr
 	resp, err := c.RPC.Sideload(ctx, &sliverpb.SideloadReq{
 		Data:        data,
 		ProcessName: processName,
-		Args:        args,
+		Args:        []string{args},
 		EntryPoint:  entryPoint,
 		Request:     &commonpb.Request{SessionID: sessionID},
 	})
@@ -68,7 +68,7 @@ func (c *Client) SpawnDll(sessionID string, data []byte, processName, args, entr
 	resp, err := c.RPC.SpawnDll(ctx, &sliverpb.InvokeSpawnDllReq{
 		Data:        data,
 		ProcessName: processName,
-		Args:        args,
+		Args:        []string{args},
 		EntryPoint:  entryPoint,
 		Request:     &commonpb.Request{SessionID: sessionID},
 	})

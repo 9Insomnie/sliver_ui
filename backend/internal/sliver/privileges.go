@@ -70,27 +70,10 @@ func (c *Client) CurrentTokenOwner(sessionID string) (string, error) {
 }
 
 // ExecuteToken executes a program in the context of the session's token.
+// Note: the ExecuteToken RPC was removed from sliver-server; use MakeToken +
+// impersonation instead. Returns a clear error so the frontend surfaces it.
 func (c *Client) ExecuteToken(sessionID, path string, args []string, output bool) (*ExecResult, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-	resp, err := c.RPC.ExecuteToken(ctx, &sliverpb.ExecuteTokenReq{
-		Path:    path,
-		Args:    args,
-		Output:  output,
-		Request: &commonpb.Request{SessionID: sessionID},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if resp.GetResponse().GetErr() != "" {
-		return nil, errors.New(resp.GetResponse().GetErr())
-	}
-	return &ExecResult{
-		Status: resp.Status,
-		Stdout: string(resp.Stdout),
-		Stderr: string(resp.Stderr),
-		PID:    resp.Pid,
-	}, nil
+	return nil, errors.New("ExecuteToken is not supported by the connected sliver-server version")
 }
 
 // RunAs runs a program as a specific user on the session.

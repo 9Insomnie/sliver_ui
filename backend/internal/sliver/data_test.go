@@ -163,7 +163,6 @@ func TestEventToView_JobNoDomains(t *testing.T) {
 
 func TestConfigToView(t *testing.T) {
 	c := &clientpb.ImplantConfig{
-		Name:             "implant-a",
 		GOOS:             "windows",
 		GOARCH:           "amd64",
 		Format:           clientpb.OutputFormat_EXECUTABLE,
@@ -180,7 +179,7 @@ func TestConfigToView(t *testing.T) {
 		},
 	}
 
-	v := configToView(c)
+	v := configToView(c, "implant-a")
 	if v == nil {
 		t.Fatal("configToView returned nil")
 	}
@@ -202,7 +201,7 @@ func TestConfigToView(t *testing.T) {
 }
 
 func TestConfigToView_Nil(t *testing.T) {
-	if v := configToView(nil); v != nil {
+	if v := configToView(nil, ""); v != nil {
 		t.Errorf("expected nil, got %+v", v)
 	}
 }

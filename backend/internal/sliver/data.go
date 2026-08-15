@@ -150,9 +150,8 @@ func (c *Client) StartListener(jobType, addr string, port uint32, tls bool) (uin
 	switch jobType {
 	case "mtls":
 		resp, err := c.RPC.StartMTLSListener(ctx, &clientpb.MTLSListenerReq{
-			Host:       addr,
-			Port:       port,
-			Persistent: true,
+			Host: addr,
+			Port: port,
 		})
 		if err != nil {
 			return 0, err
@@ -160,9 +159,8 @@ func (c *Client) StartListener(jobType, addr string, port uint32, tls bool) (uin
 		return resp.JobID, nil
 	case "http", "https":
 		req := &clientpb.HTTPListenerReq{
-			Host:       addr,
-			Port:       port,
-			Persistent: true,
+			Host: addr,
+			Port: port,
 		}
 		if jobType == "https" || tls {
 			req.Secure = true
@@ -174,8 +172,7 @@ func (c *Client) StartListener(jobType, addr string, port uint32, tls bool) (uin
 		return resp.JobID, nil
 	case "dns":
 		resp, err := c.RPC.StartDNSListener(ctx, &clientpb.DNSListenerReq{
-			Domains:    []string{addr},
-			Persistent: true,
+			Domains: []string{addr},
 		})
 		if err != nil {
 			return 0, err
@@ -183,9 +180,8 @@ func (c *Client) StartListener(jobType, addr string, port uint32, tls bool) (uin
 		return resp.JobID, nil
 	case "wireguard":
 		resp, err := c.RPC.StartWGListener(ctx, &clientpb.WGListenerReq{
-			Host:       addr,
-			Port:       port,
-			Persistent: true,
+			Host: addr,
+			Port: port,
 		})
 		if err != nil {
 			return 0, err

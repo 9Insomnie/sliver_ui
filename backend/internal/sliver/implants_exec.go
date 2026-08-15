@@ -7,14 +7,13 @@ import (
 
 	"github.com/bishopfox/sliver/protobuf/clientpb"
 	"github.com/bishopfox/sliver/protobuf/commonpb"
-	"github.com/bishopfox/sliver/protobuf/sliverpb"
 )
 
 // Backdoor plants a payload in a file on the session (Windows only).
 func (c *Client) Backdoor(sessionID, filePath, profileName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	resp, err := c.RPC.Backdoor(ctx, &sliverpb.BackdoorReq{
+	resp, err := c.RPC.Backdoor(ctx, &clientpb.BackdoorReq{
 		FilePath:    filePath,
 		ProfileName: profileName,
 		Request:     &commonpb.Request{SessionID: sessionID},
