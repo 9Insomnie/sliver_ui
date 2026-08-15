@@ -2,6 +2,7 @@ package sliver
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bishopfox/sliver/protobuf/clientpb"
@@ -106,5 +107,54 @@ func (c *Client) ReconfigureSession(sessionID string, reconnectSeconds int64) er
 		ReconnectInterval: reconnectSeconds,
 		Request:           &commonpb.Request{SessionID: sessionID},
 	})
+	return err
+}
+
+// OpenSessionFromBeacon instructs a beacon to open a new interactive session
+// on its next check-in. Returns true when the request was queued asynchronously
+// (beacon mode); the new session then appears in the session list on check-in.
+func (c *Client) OpenSessionFromBeacon(beaconID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	resp, err := c.RPC.OpenSession(ctx, &sliverpb.OpenSession{
+		C2S:     []string{},
+		Delay:   0,
+		Request: &commonpb.Request{BeaconID: beaconID},
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.GetResponse().GetAsync(), nil
+}
+
+// CloseSession closes an interactive session without killing the remote process.
+func (c *Client) CloseSession(sessionID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := c.RPC.CloseSession(ctx, &sliverpb.CloseSession{
+		Request: &commonpb.Request{SessionID: sessionID},
+	})
+	return err
+}
+
+// MonitorStart enables dead-session monitoring (watchtower) on the server.
+func (c *Client) MonitorStart() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := c.RPC.MonitorStart(ctx, &commonpb.Empty{})
+	if err != nil {
+		return err
+	}
+	if resp.GetErr() != "" {
+		return errors.New(resp.GetErr())
+	}
+	return nil
+}
+
+// MonitorStop disables dead-session monitoring on the server.
+func (c *Client) MonitorStop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := c.RPC.MonitorStop(ctx, &commonpb.Empty{})
 	return err
 }

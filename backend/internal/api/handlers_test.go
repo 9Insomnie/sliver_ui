@@ -53,6 +53,10 @@ func TestEndpointsRequireClient(t *testing.T) {
 		{"loot add", httptest.NewRequest(http.MethodPost, "/api/loot", nil)},
 		{"loot rename", httptest.NewRequest(http.MethodPost, "/api/loot/l-1/rename", nil)},
 		{"compiler", httptest.NewRequest(http.MethodGet, "/api/compiler", nil)},
+		{"beacon open session", httptest.NewRequest(http.MethodPost, "/api/beacons/b-1/open-session", nil)},
+		{"session close", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/close", nil)},
+		{"monitor start", httptest.NewRequest(http.MethodPost, "/api/monitor/start", nil)},
+		{"monitor stop", httptest.NewRequest(http.MethodPost, "/api/monitor/stop", nil)},
 	}
 
 	for _, tt := range tests {

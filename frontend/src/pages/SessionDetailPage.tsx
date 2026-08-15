@@ -46,6 +46,7 @@ export default function SessionDetailPage() {
   const [tab, setTab] = useState<TabKey>('files')
   const [pingMsg, setPingMsg] = useState('')
   const [killing, setKilling] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -103,6 +104,21 @@ export default function SessionDetailPage() {
       setPingMsg(t('detail.pingOk', { nonce: r.nonce }))
     } catch (e) {
       setPingMsg(`${t('common.failed')}: ${(e as Error).message}`)
+    }
+  }
+
+  const closeSession = async () => {
+    if (!session) return
+    setBusy(true)
+    try {
+      await api.closeSession(session.ID)
+      toast.push('success', t('sessions.closed', { name: session.Name }))
+      navigate('/')
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+      setClosing(false)
     }
   }
 
@@ -234,6 +250,9 @@ export default function SessionDetailPage() {
             </div>
 
             <div className="side-actions">
+              <button className="btn" onClick={() => setClosing(true)}>
+                {t('detail.sidebar.close')}
+              </button>
               <button className="btn danger" onClick={() => setKilling(true)}>
                 {t('detail.sidebar.kill')}
               </button>
@@ -243,6 +262,17 @@ export default function SessionDetailPage() {
       )}
 
       {!error && !session && <div className="empty">{t('common.loading')}</div>}
+
+      <ConfirmDialog
+        open={closing}
+        title={t('sessions.confirmClose')}
+        busy={busy}
+        confirmLabel={t('detail.sidebar.close')}
+        onConfirm={closeSession}
+        onCancel={() => setClosing(false)}
+      >
+        <p>{session ? t('sessions.confirmCloseBody', { name: session.Name }) : ''}</p>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={killing}

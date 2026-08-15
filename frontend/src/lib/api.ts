@@ -54,6 +54,18 @@ export const api = {
 
   beacon: (id: string) => request<Beacon>(`/beacons/${encodeURIComponent(id)}`),
 
+  openSessionFromBeacon: (beaconId: string) =>
+    request<{ success: boolean; async?: boolean }>(`/beacons/${encodeURIComponent(beaconId)}/open-session`, {
+      method: 'POST',
+    }),
+
+  closeSession: (sessionId: string) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/close`, { method: 'POST' }),
+
+  monitorStart: () => request<{ success: boolean }>('/monitor/start', { method: 'POST' }),
+
+  monitorStop: () => request<{ success: boolean }>('/monitor/stop', { method: 'POST' }),
+
   jobs: () => request<{ jobs: Job[] }>('/jobs'),
 
   events: () => request<{ events: Event[] }>('/events'),

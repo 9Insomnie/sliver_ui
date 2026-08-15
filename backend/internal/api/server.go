@@ -117,6 +117,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/reg/create-key", s.handleRegCreateKey)
 	mux.HandleFunc("POST /api/sessions/{id}/reg/delete-key", s.handleRegDeleteKey)
 	mux.HandleFunc("POST /api/sessions/{id}/reconfigure", s.handleReconfigure)
+	mux.HandleFunc("POST /api/sessions/{id}/close", s.handleCloseSession)
+	mux.HandleFunc("POST /api/monitor/start", s.handleMonitorStart)
+	mux.HandleFunc("POST /api/monitor/stop", s.handleMonitorStop)
+	mux.HandleFunc("POST /api/beacons/{id}/open-session", s.handleOpenSession)
 
 	mux.HandleFunc("GET /api/portfwd", s.handlePortfwdList)
 	mux.HandleFunc("POST /api/portfwd", s.handlePortfwdStart)
