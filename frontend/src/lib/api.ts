@@ -18,6 +18,7 @@ import type {
   ImplantProfile,
   ServerInfo,
   OverviewData,
+  LootEntry,
 } from './types'
 
 const BASE = '/api'
@@ -87,6 +88,12 @@ export const api = {
 
   beaconTaskContent: (beaconId: string, taskId: string) =>
     request<BeaconTask>(`/beacons/${beaconId}/tasks/${taskId}`),
+
+  lootList: () => request<{ loot: LootEntry[] }>('/loot'),
+
+  lootContent: (id: string) => request<LootEntry>(`/loot/${encodeURIComponent(id)}`),
+
+  lootRemove: (id: string) => request<{ success: boolean }>(`/loot/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   implantProfiles: () => request<{ profiles: ImplantProfile[] }>('/implant-profiles'),
 

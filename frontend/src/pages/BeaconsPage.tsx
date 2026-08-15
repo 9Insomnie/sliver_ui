@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import type { Beacon } from '../lib/types'
 import BeaconTasksModal from '../components/BeaconTasksModal'
 import InlineEdit from '../components/InlineEdit'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useToast } from '../components/common/Toast'
 import './pages.css'
 
 type TFunc = ReturnType<typeof useTranslation>['t']
@@ -25,7 +28,11 @@ export default function BeaconsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [tasksFor, setTasksFor] = useState<Beacon | null>(null)
+  const [removing, setRemoving] = useState<Beacon | null>(null)
+  const [busy, setBusy] = useState(false)
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const toast = useToast()
 
   const load = async () => {
     try {
@@ -55,12 +62,16 @@ export default function BeaconsPage() {
   }
 
   const remove = async (b: Beacon) => {
-    if (!window.confirm(t('beacons.confirmRemove', { name: b.Name }))) return
+    setBusy(true)
     try {
       await api.rmBeacon(b.ID)
+      setRemoving(null)
+      toast.push('success', t('beacons.removed', { name: b.Name }))
       load()
     } catch (e) {
-      setError((e as Error).message)
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -104,6 +115,9 @@ export default function BeaconsPage() {
                 <tr key={b.ID}>
                   <td className="mono">
                     <InlineEdit value={b.Name} onSave={(name) => rename(b, name)} mono />
+                    <button className="link-btn" onClick={() => navigate(`/beacons/${b.ID}`)}>
+                      {t('beacons.open')}
+                    </button>
                   </td>
                   <td>{b.Hostname}</td>
                   <td>{b.Username}</td>
@@ -124,7 +138,7 @@ export default function BeaconsPage() {
                       <button className="btn sm" onClick={() => setTasksFor(b)}>
                         {t('beacons.tasks')}
                       </button>
-                      <button className="btn sm danger" onClick={() => remove(b)}>
+                      <button className="btn sm danger" onClick={() => setRemoving(b)}>
                         {t('beacons.remove')}
                       </button>
                     </div>
@@ -142,6 +156,17 @@ export default function BeaconsPage() {
           onClose={() => setTasksFor(null)}
         />
       )}
+      <ConfirmDialog
+        open={!!removing}
+        title={t('beacons.confirmRemove')}
+        danger
+        busy={busy}
+        confirmLabel={t('beacons.remove')}
+        onConfirm={() => removing && remove(removing)}
+        onCancel={() => setRemoving(null)}
+      >
+        <p>{removing ? t('beacons.confirmRemoveBody', { name: removing.Name }) : ''}</p>
+      </ConfirmDialog>
     </div>
   )
 }

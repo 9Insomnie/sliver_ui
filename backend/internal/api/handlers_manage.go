@@ -184,3 +184,53 @@ func (s *Server) handleSocksStop(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
+
+// --- Loot ---
+
+func (s *Server) handleLootAll(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	loot, err := c.LootAll()
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"loot": loot})
+}
+
+func (s *Server) handleLootContent(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	id := r.PathValue("id")
+	if id == "" {
+		writeErr(w, http.StatusBadRequest, "missing loot id")
+		return
+	}
+	loot, err := c.LootContent(id)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, loot)
+}
+
+func (s *Server) handleLootRemove(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	id := r.PathValue("id")
+	if id == "" {
+		writeErr(w, http.StatusBadRequest, "missing loot id")
+		return
+	}
+	if err := c.LootRemove(id); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}

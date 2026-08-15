@@ -11,12 +11,20 @@ import SessionDetailPage from './pages/SessionDetailPage'
 import TerminalPage from './pages/TerminalPage'
 import ListenersPage from './pages/ListenersPage'
 import BeaconsPage from './pages/BeaconsPage'
+import BeaconDetailPage from './pages/BeaconDetailPage'
 import ImplantsPage from './pages/ImplantsPage'
 import SocksPage from './pages/SocksPage'
+import JobsPage from './pages/JobsPage'
+import TasksPage from './pages/TasksPage'
+import LootPage from './pages/LootPage'
+import FilesPage from './pages/FilesPage'
+import ProcessesPage from './pages/ProcessesPage'
+import NetworkPage from './pages/NetworkPage'
 import EventsPage from './pages/EventsPage'
 import SettingsPage from './pages/SettingsPage'
 import Logo from './components/Logo'
 import CommandPalette from './components/CommandPalette'
+import { ToastProvider } from './components/common/Toast'
 import './App.css'
 
 const EMPTY_COUNTS: OverviewCounts = { sessions: 0, beacons: 0, jobs: 0, builders: 0, socks: 0 }
@@ -32,16 +40,24 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     const refresh = async () => {
+      let current
       try {
-        const d = await api.info()
-        if (cancelled) return
-        setInfo({ version: d.version || '', connected: !!d.connected })
-        if (d.connected) {
-          const ov = await api.overview()
-          if (!cancelled) setCounts(ov.counts)
-        }
+        current = await api.info()
       } catch {
         if (!cancelled) setInfo({ version: '', connected: false })
+        return
+      }
+      if (cancelled) return
+      setInfo({ version: current.version || '', connected: !!current.connected })
+      if (!current.connected) {
+        setCounts(EMPTY_COUNTS)
+        return
+      }
+      try {
+        const ov = await api.overview()
+        if (!cancelled) setCounts(ov.counts)
+      } catch {
+        // A timeout while collecting badges must not make the server appear disconnected.
       }
     }
     refresh()
@@ -174,8 +190,9 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <aside className="sidebar">
+    <ToastProvider>
+      <div className="app">
+        <aside className="sidebar">
         <div className="logo">
           <span className="logo-mark">
             <Logo size={18} />
@@ -248,7 +265,7 @@ export default function App() {
               <kbd className="kbd">⌘K</kbd>
             </button>
             <div className={`server-status ${info?.connected ? 'ok' : 'bad'}`}>
-              <span className="dot ok" />
+              <span className={`dot ${info?.connected ? 'ok' : 'bad'}`} />
               <span className="server-status-text">
                 {info?.connected ? t('status.connected') : t('status.disconnected')}
               </span>
@@ -256,14 +273,27 @@ export default function App() {
           </div>
         </header>
         <main className="content">
+          {info && !info.connected && (
+            <div className="offline-banner">
+              <span className="dot bad" />
+              <span>{t('app.offline')}</span>
+            </div>
+          )}
           <div key={location.pathname} className={`page-transition ${pageDir}`}>
             <Routes location={location}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/sessions" element={<SessionsPage />} />
               <Route path="/beacons" element={<BeaconsPage />} />
+              <Route path="/beacons/:id" element={<BeaconDetailPage />} />
               <Route path="/listeners" element={<ListenersPage />} />
               <Route path="/implants" element={<ImplantsPage />} />
               <Route path="/socks" element={<SocksPage />} />
+              <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/loot" element={<LootPage />} />
+              <Route path="/files" element={<FilesPage />} />
+              <Route path="/processes" element={<ProcessesPage />} />
+              <Route path="/network" element={<NetworkPage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/sessions/:id" element={<SessionDetailPage />} />
@@ -272,7 +302,8 @@ export default function App() {
           </div>
         </main>
       </div>
+      </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onToggleLang={toggleLang} />
-    </div>
+    </ToastProvider>
   )
 }
