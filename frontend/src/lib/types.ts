@@ -142,6 +142,19 @@ export interface CompilerInfo {
   CrossCompilers: CrossCompiler[]
 }
 
+export interface IOC {
+  ID: string
+  Path: string
+  FileHash: string
+}
+
+export interface Host {
+  Hostname: string
+  HostUUID: string
+  OSVersion: string
+  IOCs: IOC[]
+}
+
 export interface Operator {
   Name: string
   FirstContact: string

@@ -141,6 +141,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/regenerate", s.handleRegenerate)
 	mux.HandleFunc("GET /api/operators", s.handleGetOperators)
 	mux.HandleFunc("GET /api/compiler", s.handleCompiler)
+	mux.HandleFunc("GET /api/hosts", s.handleHosts)
+	mux.HandleFunc("GET /api/hosts/{uuid}", s.handleHost)
+	mux.HandleFunc("DELETE /api/hosts/{uuid}", s.handleHostRm)
+	mux.HandleFunc("DELETE /api/hosts/{uuid}/iocs/{iocID}", s.handleHostIOCRm)
 
 	mux.HandleFunc("GET /api/socks", s.handleSocksList)
 	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
