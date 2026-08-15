@@ -1,7 +1,7 @@
 # Sliver UI
 
 <p align="center">
-  <strong>A modern web interface for Sliver C2</strong>
+  <strong>A modern web & desktop interface for Sliver C2</strong>
 </p>
 
 <p align="center">
@@ -17,145 +17,169 @@
   <a href="https://github.com/9Insomnie/sliver_ui/releases">
     <img src="https://img.shields.io/github/downloads/9Insomnie/sliver_ui/total?style=flat-square" alt="Downloads">
   </a>
-  <a href="https://github.com/9Insomnie/sliver_ui">
-    <img src="https://img.shields.io/github/last-commit/9Insomnie/sliver_ui?style=flat-square" alt="Last Commit">
-  </a>
   <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/9Insomnie/sliver_ui?style=flat-square" alt="License">
   </a>
 </p>
 
-**Sliver UI** is a browser-based console for operating [Sliver](https://github.com/BishopFox/sliver) — the open-source adversary simulation and C2 framework. It speaks directly to a Sliver server over its real gRPC/RPC surface, so every action you take maps to an actual Sliver operation: session control, beacon tasking, implant generation, listener management, loot handling, SOCKS proxying, and much more.
+**Sliver UI** is a graphical console for operating [Sliver](https://github.com/BishopFox/sliver) — the open-source adversary simulation / C2 framework. The backend acts as a **Sliver client**: it authenticates to a Sliver server over its native gRPC/RPC surface and exposes the operations through an HTTP API, while the frontend (React) renders them in a browser or a native desktop window.
 
-Built with a Go backend and a React frontend, the whole product ships as a **single static binary** — the backend embeds the built UI, serving the interface and the HTTP API together with nothing else to install.
-
-## How it runs
-
-On Windows the binary opens a **native WebView2 desktop window**; on Linux and macOS it runs as a plain HTTP server and opens your default browser. You can force server-only mode (no desktop window) with `--no-window`:
+Everything ships as a **single static binary** — the built frontend is embedded into the Go backend (`go:embed`), so there is nothing else to install.
 
 ```text
-┌──────────────────────────┐
-│  Browser / WebView2      │
-│  Sliver UI (React)       │
-└──────────┬───────────────┘
-           │  HTTP API / WebSocket
-           ▼
-┌──────────────────────────┐
-│  Go backend server       │
-│  (single binary)         │
-└──────────┬───────────────┘
-           │  gRPC (Sliver RPC)
-           ▼
-┌──────────────────────────┐
-│  Sliver Server           │
-│  C2 / Sessions           │
-└──────────────────────────┘
+┌───────────────────────────────┐
+│  Browser / WebView2 window    │
+│  Sliver UI (React + xterm.js) │
+└──────────────┬────────────────┘
+               │  HTTP API / WebSocket
+               ▼
+┌───────────────────────────────┐
+│  Go backend  (sliver client)  │
+│  embedded frontend + API      │
+└──────────────┬────────────────┘
+               │  gRPC / RPC (mTLS + token)
+               ▼
+┌───────────────────────────────┐
+│  Sliver Server                │
+│  sessions · beacons · jobs    │
+└───────────────────────────────┘
 ```
+
+## Running the app
+
+- **Windows** — starts in a native **WebView2 desktop window** (1440×900). Use `--no-window` to run as a plain HTTP server instead.
+- **Linux / macOS** — runs as an HTTP server and opens the default browser automatically.
+
+```
+# plain server mode (any OS)
+sliver-ui --no-window --addr 0.0.0.0:8080
+```
+
+| Flag           | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `--addr`       | HTTP listen address (default `0.0.0.0:8080`)                       |
+| `--profile`    | Connect to a saved Sliver profile at startup (optional)            |
+| `--no-window`  | Run as an HTTP server, skip the desktop window                     |
+| `--no-browser` | Don't open the browser (server mode only)                          |
+
+When running as a GUI-subsystem binary the console log is mirrored to `sliver-ui.log` next to the binary.
 
 ## Connecting to a Sliver server
 
-Sliver UI connects using a **sliver-client config file** (the `*.json` produced by Sliver). Two ways to connect:
-
-1. **In the UI** — open **Settings**, load the config file (e.g. `local.json`), inspect the parsed operator/lhost/lport, then connect. Saved profiles can be switched with one click afterwards.
-2. **At startup** — pass a profile name with `--profile <name>` and the backend connects to a saved sliver-client profile before serving the UI.
+Sliver UI connects like `sliver-client` would, using a **client config file** — the `*.json` profile generated for an operator. Connection can be done either in the UI or at startup.
 
 ```
-# generate a client config on the Sliver server (once)
-sliver-client config generate operator
-
-# then either load local.json in the UI, or launch with a saved profile
-sliver-ui --profile operator
+# on the Sliver server, generate a config for an operator (once)
+sliver-client config generate <operator>      # -> local.json
 ```
 
-## Highlights
+1. **From the UI (Settings page):**
+   - Click "load config file" and pick `local.json`. The file is parsed and the operator / lhost / lport are shown for confirmation, then **Connect**.
+   - After the first connection the profile is also available as a **saved profile** — any profile under `~/.sliver-client/configs/` (or the `SLIVER_CLIENT_CONFIGS` path list) can be switched to with one click.
+2. **At startup:** pass the profile name — `sliver-ui --profile <operator>` — and the backend connects before serving the UI.
 
-- **Desktop window (Windows)** — embedded frontend in a native WebView2 window; on other platforms it falls back to the default browser automatically.
-- **Visualized dashboard** — live counts (sessions, beacons, listeners, builders, SOCKS) alongside charted breakdowns: sessions by OS, transport-mix donuts (mTLS / HTTP / DNS / WG), top hosts and recent-activity bars, auto-refreshing.
-- **Sessions** — search, kill, rename, and a full detail workspace with tabs: Terminal (xterm.js over WebSocket), Execute, Files (browse/upload/download/mkdir/mv/rm), Processes (list/kill/migrate/dump), Network (ifconfig/netstat), Environment, Registry, Port Forwarding, Token Operations, Advanced Execution (shellcode, sideload, spawn-dll, exec-assembly, PsExec), Screenshot.
-- **Beacons** — list, rename, remove, per-beacon task history with output, and age-based pruning of stale beacons.
-- **Listeners / Jobs** — start and stop listeners (mtls / dns / wireguard / http / https).
-- **Implants** — profiles, build listing, regenerate, compiler info.
-- **SOCKS5 proxy** — per-session SOCKS proxies managed from the UI.
-- **Loot** — browse captured files and credentials, preview content, download, one-click copy of secrets.
-- **Aliases** — install extension bundles (tar.gz) and run them on any session, with automatic assembly / DLL / sideload dispatch.
-- **Canaries** — DNS canary tracking with trigger state.
-- **Pivots, WireGuard, Services, SSH, Extensions, MSF, Backdoor & DLL Hijack** — remote ops exposed with the same profile- and session-centric workflows as the CLI.
-- **i18n** — English and 简体中文, switchable from the sidebar.
+Once connected the UI stays in sync with the server; all operational data (sessions, beacons, loot, hosts…) lives on the Sliver server, and the backend itself is stateless.
 
-## Tech Stack
+## Features
 
-| Layer     | Stack                                                              |
-| --------- | ------------------------------------------------------------------ |
+### Sidebar: six sections
+
+| Section    | Pages                                                        |
+| ---------- | ------------------------------------------------------------ |
+| Operations | Dashboard, Sessions, Beacons, Listeners                      |
+| Payloads   | Implants, SOCKS5                                             |
+| Tasking    | Jobs, Tasks, Loot, Canaries, Aliases                         |
+| Host       | Processes, Network, Files                                    |
+| Analysis   | Hosts, Websites, Events                                      |
+| System     | Settings                                                     |
+
+Sidebar entries carry **live count badges** (sessions, beacons, listeners, jobs, implants, socks) and can be **favorited** into a pinned section; the sidebar collapses on narrow screens.
+
+### Dashboard
+
+Live overview polling: stat cards (sessions / beacons / listeners / builders / SOCKS), donut charts (sessions by OS, transport mix: mTLS / HTTP / DNS / WireGuard), top-hosts and recent-activity bars, plus a recent-activity feed and tables of active sessions and listeners.
+
+### Sessions
+
+Session list with search / sort / inline rename / kill / prune, and a **detail workspace with 13 tabs**:
+
+- **Terminal** — full-screen `xterm.js` shell over a binary WebSocket (`/ws/sessions/{id}/terminal`; resize-aware frame protocol)
+- **Files** — browse, upload, download, view, mkdir, mv, rm
+- **Processes** — list, kill, migrate, process dump
+- **Network** — `ifconfig` interfaces and `netstat` connections
+- **Env** — get / set / unset environment variables
+- **Exec** — run a command and stream output
+- **Screenshot** — capture the remote screen
+- **Port Forward** — TCP port forwarding per session
+- **Registry** — Windows registry subkeys / values / read / write / create / delete
+- **Advanced** — execute-assembly, sideload, spawn-dll, MSF (inject / remote handler), session reconfigure
+- **Tokens** — impersonate, make-token, rev2self, getsystem, run-as, whoami, privs, execute-token
+- **WireGuard** — WG client config, port forwards and SOCKS servers over WireGuard
+- **Pivots & Services** — pivot listeners (with graph), Windows service start/stop/remove, SSH command, extension list/register/call
+
+Session properties panel: ID, hostname, user, OS/arch, transport, remote address, last check-in, active C2, agent version, plus inline Ping / Rename / Kill / Close.
+
+### Beacons
+
+Beacon list with rename, monitor on/off, removal, age-based **prune**, per-beacon **task history** with decoded output, and "open session" to convert a beacon into an interactive session.
+
+### Implants & Listeners
+
+- **Implants** — full generation form (OS: win/linux/darwin/freebsd, arch, format: exe/shared/shellcode, C2: mTLS/HTTP/HTTPS/DNS/WireGuard, interval/jitter, evasion, obfuscate, limit-domain-joined), saved **implant profiles**, build list with download / regenerate / delete, compiler info, registered operators.
+- **Listeners** — start/stop C2 listeners: mTLS, HTTP(S), DNS, WireGuard.
+- **Jobs** — active jobs table with stop action.
+
+### Loot, Canaries, Aliases
+
+- **Loot** — captured files & credentials (filter by type), add / rename / remove, view content, download, one-click copy of secrets.
+- **Canaries** — DNS canary tracking with burned / clean filter.
+- **Aliases** — install extension bundles (`.tar.gz`), remove, and run any alias on a session (args, process, arch, method, class).
+
+### Host, Analysis, SOCKS
+
+- **Processes / Network / Files** — same session tabs in page form with a session picker, for cross-session workflows.
+- **Hosts** — host database learned from server events, with per-host **IOC** management.
+- **Websites** — static site hosting: add/remove sites and manage their content.
+- **Events** — server event stream (session / beacon / listener) with type filters.
+- **SOCKS5** — start per-session SOCKS5 proxies (optional bind address / port / auth), stop, list.
+
+### UI extras
+
+Dark theme, **i18n (English / 简体中文)** toggle in the sidebar footer, toasts, animated page transitions, offline banner while disconnected.
+
+## Tech stack
+
+| Layer     | Stack                                                        |
+| --------- | ------------------------------------------------------------ |
 | Frontend  | React 18, TypeScript, Vite 5, react-router, i18next, xterm.js, Vitest + Testing Library |
-| Backend   | Go (`net/http` with method routing), WebSocket (terminal)          |
-| Desktop   | WebView2 (`github.com/jchv/go-webview2`, Windows only)             |
-| Sliver    | gRPC client (`github.com/bishopfox/sliver` RPC)                    |
-
-## Usage
-
-### Prebuilt releases
-
-Download the matching binary from the [Releases](https://github.com/9Insomnie/sliver_ui/releases) page:
-
-| Platform | Binary |
-| -------- | ------ |
-| Windows x86_64 | `sliver-ui-windows-amd64.exe` |
-| Linux x86_64 / arm64 | `sliver-ui-linux-amd64` / `sliver-ui-linux-arm64` |
-| macOS x86_64 / arm64 | `sliver-ui-darwin-amd64` / `sliver-ui-darwin-arm64` |
-
-```
-./sliver-ui --profile operator --no-window
-```
-
-### Flags
-
-| Flag            | Description                                                        |
-| --------------- | ------------------------------------------------------------------ |
-| `--addr`        | Listen address for the API server (default `0.0.0.0:8080`)         |
-| `--profile`     | Sliver-client profile to connect to on startup (optional)          |
-| `--no-window`   | Run as a plain HTTP server without the desktop UI window           |
-| `--no-browser`  | Do not open the web UI in the default browser (server mode only)   |
-
-When running as a GUI-subsystem binary, console output is mirrored to `sliver-ui.log` next to the binary for debugging.
+| Backend   | Go 1.25, `net/http` with method routing, WebSocket terminal |
+| Desktop   | WebView2 (`github.com/jchv/go-webview2`, Windows only)       |
+| Sliver    | `github.com/bishopfox/sliver` v1.7.3 gRPC client (mTLS + token auth) |
 
 ## Building from source
 
-Requires **Go** and **Node.js** (with npm).
+Requires Go and Node.js.
 
 ```
-# full single-binary production build
+# one-shot production build (frontend build + copy into embed dir + Go build)
 make build
-./sliver-ui --addr 0.0.0.0:8080
+./sliver-ui --no-window
 
-# run the API server + Vite dev server (hot reload, frontend proxies /api)
+# dev mode: Go API on :8080 + Vite dev server on :5173 (proxies /api and /ws)
 make dev
 
 # tests and vet
 make test
 make vet
 
-# clean build artifacts
+# clean build artifacts (frontend/dist, embedded dist, binary)
 make clean
 ```
 
-Or manually:
-
-```
-cd frontend && npm ci && npm run build
-cp -r frontend/dist/* backend/web/dist/
-cd backend && go build -o ../sliver-ui .
-```
-
-## Development
-
-```
-make dev   # backend on 0.0.0.0:8080, frontend dev server with proxy to /api
-```
-
-CI runs `go vet` + `go test` on the backend and a type-checked build + Vitest on the frontend for every push and pull request against `main`. Release binaries for all platforms are built automatically when a `v*` tag is pushed.
-
-Sliver UI is designed for authorized security assessments, red-team engagements, adversary simulation, research, CTFs, and isolated labs.
+Prebuilt binaries for **Windows, Linux and macOS (amd64 + arm64)** are attached to every [release](https://github.com/9Insomnie/sliver_ui/releases); CI runs backend `go vet` + `go test` and a type-checked frontend build + Vitest on every push/PR to `main`.
 
 ## License
 
 [MIT](./LICENSE)
+
+*Sliver UI is intended for authorized security assessments, red-team engagements, adversary simulation, research, CTFs, and isolated labs only.*
