@@ -59,8 +59,8 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           <label>{t('advanced.mode')}</label>
           <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
             <option value="assembly">.NET Assembly</option>
-            <option value="sideload">Sideload DLL</option>
-            <option value="spawndll">Spawn DLL</option>
+            <option value="sideload">{t('advanced.sideloadLabel')}</option>
+            <option value="spawndll">{t('advanced.spawnDllLabel')}</option>
           </select>
         </div>
         <div className="field">

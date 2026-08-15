@@ -8,6 +8,7 @@ export default function SocksPage() {
   const { t } = useTranslation()
   const [proxies, setProxies] = useState<SocksProxy[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [starting, setStarting] = useState(false)
@@ -25,6 +26,8 @@ export default function SocksPage() {
       setProxies(d.proxies || [])
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -156,14 +159,20 @@ export default function SocksPage() {
             </tr>
           </thead>
           <tbody>
-            {proxies.length === 0 && (
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="empty">
+                  {t('common.loading')}
+                </td>
+              </tr>
+            ) : proxies.length === 0 ? (
               <tr>
                 <td colSpan={5} className="empty">
                   {t('socks.empty')}
                 </td>
               </tr>
-            )}
-            {proxies.map((p) => (
+            ) : null}
+            {!loading && proxies.map((p) => (
               <tr key={p.ID}>
                 <td className="mono">{p.ID}</td>
                 <td className="mono">{p.SessionID.slice(0, 12)}</td>

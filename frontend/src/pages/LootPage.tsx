@@ -135,12 +135,6 @@ export default function LootPage() {
       sortValue: (l) => l.Size || 0,
       render: (l) => <span className="mono">{fmtSize(l.Size)}</span>,
     },
-    {
-      key: 'OriginHostUUID',
-      label: t('loot.thOrigin'),
-      sortable: true,
-      render: (l) => <span className="mono">{l.OriginHostUUID ? l.OriginHostUUID.slice(0, 8) : '-'}</span>,
-    },
   ]
 
   return (

@@ -10,14 +10,13 @@ import (
 
 // LootView is the JSON shape of a loot entry.
 type LootView struct {
-	ID            string `json:"ID"`
-	Name          string `json:"Name"`
-	LootType      string `json:"LootType"`
-	FileType      string `json:"FileType"`
-	File          string `json:"File"`
-	Size          int64  `json:"Size"`
-	OriginHostUUID string `json:"OriginHostUUID"`
-	DataB64       string `json:"DataB64,omitempty"`
+	ID       string `json:"ID"`
+	Name     string `json:"Name"`
+	LootType string `json:"LootType"`
+	FileType string `json:"FileType"`
+	File     string `json:"File"`
+	Size     int64  `json:"Size"`
+	DataB64  string `json:"DataB64,omitempty"`
 }
 
 func lootToView(l *clientpb.Loot, withData bool) *LootView {
@@ -25,16 +24,19 @@ func lootToView(l *clientpb.Loot, withData bool) *LootView {
 		return nil
 	}
 	v := &LootView{
-		ID:             l.ID,
-		Name:           l.Name,
-		LootType:       l.LootType.String(),
-		FileType:       l.FileType.String(),
-		File:           l.File,
-		Size:           l.Size,
-		OriginHostUUID: l.OriginHostUUID,
+		ID:       l.LootID,
+		Name:     l.Name,
+		LootType: l.Type.String(),
+		FileType: l.FileType.String(),
+	}
+	if l.File != nil {
+		v.File = l.File.Name
+		v.Size = int64(len(l.File.Data))
 	}
 	if withData {
-		v.DataB64 = encodeBase64(l.Data)
+		if l.File != nil {
+			v.DataB64 = encodeBase64(l.File.Data)
+		}
 	}
 	return v
 }
@@ -63,7 +65,7 @@ func (c *Client) LootAll() ([]LootView, error) {
 func (c *Client) LootContent(id string) (*LootView, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	resp, err := c.RPC.LootContent(ctx, &clientpb.Loot{ID: id})
+	resp, err := c.RPC.LootContent(ctx, &clientpb.Loot{LootID: id})
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +76,6 @@ func (c *Client) LootContent(id string) (*LootView, error) {
 func (c *Client) LootRemove(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	_, err := c.RPC.LootRemove(ctx, &clientpb.Loot{ID: id})
+	_, err := c.RPC.LootRm(ctx, &clientpb.Loot{LootID: id})
 	return err
 }

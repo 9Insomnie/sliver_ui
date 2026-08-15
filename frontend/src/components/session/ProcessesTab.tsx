@@ -2,12 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import type { ProcessInfo } from '../../lib/types'
+import ConfirmDialog from '../common/ConfirmDialog'
 
 export default function ProcessesTab({ sessionId }: { sessionId: string }) {
   const { t } = useTranslation()
   const [procs, setProcs] = useState<ProcessInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState<'kill' | 'migrate' | null>(null)
+  const [targetPid, setTargetPid] = useState(0)
+  const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -27,23 +31,29 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
   }, [load])
 
   const kill = async (pid: number) => {
-    if (!window.confirm(t('processes.confirmKill', { pid }))) return
+    setBusy(true)
     try {
       await api.killProcess(sessionId, pid)
+      setConfirm(null)
       load()
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
   const migrate = async (pid: number) => {
-    if (!window.confirm(t('processes.confirmMigrate', { pid }))) return
+    setBusy(true)
     try {
       await api.migrate(sessionId, pid)
+      setConfirm(null)
       setError('')
       load()
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -105,13 +115,25 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
                 </td>
                 <td>
                   <div className="fs-actions">
-                    <button className="btn sm" onClick={() => migrate(p.PID)}>
+                    <button
+                      className="btn sm"
+                      onClick={() => {
+                        setTargetPid(p.PID)
+                        setConfirm('migrate')
+                      }}
+                    >
                       {t('processes.migrate')}
                     </button>
                     <button className="btn sm" onClick={() => dump(p.PID)}>
                       {t('processes.dump')}
                     </button>
-                    <button className="btn sm danger" onClick={() => kill(p.PID)}>
+                    <button
+                      className="btn sm danger"
+                      onClick={() => {
+                        setTargetPid(p.PID)
+                        setConfirm('kill')
+                      }}
+                    >
                       {t('processes.kill')}
                     </button>
                   </div>
@@ -121,6 +143,23 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
           </tbody>
         </table>
       )}
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirm === 'kill' ? t('processes.kill') : t('processes.migrate')}
+        danger={confirm === 'kill'}
+        busy={busy}
+        confirmLabel={confirm === 'kill' ? t('processes.kill') : t('processes.migrate')}
+        onConfirm={() =>
+          confirm === 'kill' ? kill(targetPid) : confirm === 'migrate' ? migrate(targetPid) : undefined
+        }
+        onCancel={() => setConfirm(null)}
+      >
+        <p>
+          {confirm === 'kill'
+            ? t('processes.confirmKill', { pid: targetPid })
+            : t('processes.confirmMigrate', { pid: targetPid })}
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }

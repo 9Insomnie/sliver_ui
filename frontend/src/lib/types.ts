@@ -116,7 +116,6 @@ export interface LootEntry {
   FileType: string
   File: string
   Size: number
-  OriginHostUUID: string
   DataB64?: string
 }
 
