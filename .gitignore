@@ -93,6 +93,12 @@
 .gotmp/
 **/Cargo.lock
 
+# Embedded frontend build output
+backend/web/dist/
+!backend/web/dist/
+backend/web/dist/*
+!backend/web/dist/.gitkeep
+
 # Ruby
 *.gem
 *.rbc

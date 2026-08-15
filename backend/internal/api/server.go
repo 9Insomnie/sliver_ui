@@ -149,6 +149,14 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("DELETE /api/listeners/{id}", s.handleStopListener)
 	mux.HandleFunc("/ws/sessions/{id}/terminal", s.handleTerminalWS)
 
+	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, http.StatusNotFound, "not found")
+	})
+	mux.HandleFunc("/ws/", func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, http.StatusNotFound, "not found")
+	})
+	mux.HandleFunc("/", handleStatic)
+
 	return withCORS(withLogging(mux))
 }
 
