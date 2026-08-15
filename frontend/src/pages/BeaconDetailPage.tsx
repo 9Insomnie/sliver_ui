@@ -59,14 +59,14 @@ export default function BeaconDetailPage() {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
+    if (!id) return
     try {
       setError('')
-      const d = await api.beacons()
-      const b = (d.beacons || []).find((x) => x.ID === id)
-      setBeacon(b || null)
-      if (!b) setError(t('detail.notFound'))
+      const b = await api.beacon(id)
+      setBeacon(b)
     } catch (e) {
-      setError((e as Error).message)
+      setBeacon(null)
+      setError(t('detail.notFound'))
     }
   }, [id, t])
 

@@ -117,6 +117,29 @@ export interface LootEntry {
   File: string
   Size: number
   DataB64?: string
+  CredUser?: string
+  CredPassword?: string
+  CredAPIKey?: string
+}
+
+export interface CompilerTarget {
+  GOOS: string
+  GOARCH: string
+  Format: string
+}
+
+export interface CrossCompiler {
+  TargetGOOS: string
+  TargetGOARCH: string
+  CCPath: string
+  CXXPath: string
+}
+
+export interface CompilerInfo {
+  GOOS: string
+  GOARCH: string
+  Targets: CompilerTarget[]
+  CrossCompilers: CrossCompiler[]
 }
 
 export interface Operator {

@@ -100,6 +100,21 @@ func (c *Client) Beacons() ([]BeaconView, error) {
 	return out, nil
 }
 
+// Beacon fetches a single beacon by id.
+func (c *Client) Beacon(id string) (*BeaconView, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := c.RPC.GetBeacon(ctx, &clientpb.Beacon{ID: id})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, nil
+	}
+	v := beaconToView(resp)
+	return &v, nil
+}
+
 // Jobs lists active listener jobs.
 func (c *Client) Jobs() ([]JobView, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -274,3 +274,59 @@ func (c *Client) KillSession(id string) error {
 	})
 	return err
 }
+
+// CompilerTargetView is the JSON shape of a compiler build target.
+type CompilerTargetView struct {
+	GOOS   string `json:"GOOS"`
+	GOARCH string `json:"GOARCH"`
+	Format string `json:"Format"`
+}
+
+// CrossCompilerView is the JSON shape of an installed cross-compiler.
+type CrossCompilerView struct {
+	TargetGOOS   string `json:"TargetGOOS"`
+	TargetGOARCH string `json:"TargetGOARCH"`
+	CCPath       string `json:"CCPath"`
+	CXXPath      string `json:"CXXPath"`
+}
+
+// CompilerView is the JSON shape returned by GetCompiler.
+type CompilerView struct {
+	GOOS           string               `json:"GOOS"`
+	GOARCH         string               `json:"GOARCH"`
+	Targets        []CompilerTargetView `json:"Targets"`
+	CrossCompilers []CrossCompilerView  `json:"CrossCompilers"`
+}
+
+// CompilerInfo fetches the Sliver server's compiler targets and cross-compilers.
+func (c *Client) CompilerInfo() (*CompilerView, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	resp, err := c.RPC.GetCompiler(ctx, &commonpb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+	v := &CompilerView{GOOS: resp.GOOS, GOARCH: resp.GOARCH}
+	for _, t := range resp.Targets {
+		if t == nil {
+			continue
+		}
+		v.Targets = append(v.Targets, CompilerTargetView{
+			GOOS:   t.GOOS,
+			GOARCH: t.GOARCH,
+			Format: t.Format.String(),
+		})
+	}
+	for _, cc := range resp.CrossCompilers {
+		if cc == nil {
+			continue
+		}
+		v.CrossCompilers = append(v.CrossCompilers, CrossCompilerView{
+			TargetGOOS:   cc.TargetGOOS,
+			TargetGOARCH: cc.TargetGOARCH,
+			CCPath:       cc.CCPath,
+			CXXPath:      cc.CXXPath,
+		})
+	}
+	return v, nil
+}

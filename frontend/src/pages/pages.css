@@ -314,6 +314,31 @@ table.data tbody tr:last-child td {
   gap: 8px;
 }
 
+.compiler-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: var(--fs-sm);
+}
+.compiler-tag {
+  color: var(--text-dim);
+}
+.compiler-tag:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+.compiler-tag.mono {
+  background: rgba(127, 127, 127, 0.1);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
 /* ─── Forms ────────────────────────────────────────────────────── */
 .form-grid {
   display: grid;

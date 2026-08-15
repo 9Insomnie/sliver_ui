@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import { base64ToBytes, triggerDownload } from '../lib/binary'
-import type { ImplantBuild, ImplantConfig, ImplantProfile } from '../lib/types'
+import type { CompilerInfo, ImplantBuild, ImplantConfig, ImplantProfile } from '../lib/types'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { useToast } from '../components/common/Toast'
 import './pages.css'
@@ -38,6 +38,7 @@ export default function ImplantsPage() {
   const [evasion, setEvasion] = useState(false)
   const [deleting, setDeleting] = useState<{ kind: 'build' | 'profile'; name: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [compiler, setCompiler] = useState<CompilerInfo | null>(null)
   const { t } = useTranslation()
   const toast = useToast()
 
@@ -69,9 +70,18 @@ export default function ImplantsPage() {
     }
   }
 
+  const loadCompiler = async () => {
+    try {
+      setCompiler(await api.compiler())
+    } catch {
+      setCompiler(null)
+    }
+  }
+
   useEffect(() => {
     load()
     loadProfiles()
+    loadCompiler()
     const t = setInterval(load, 3000)
     return () => clearInterval(t)
   }, [])
@@ -239,6 +249,21 @@ export default function ImplantsPage() {
           }}
         >
           {message}
+        </div>
+      )}
+
+      {compiler && (
+        <div className="compiler-strip">
+          <span className="compiler-tag">
+            {t('implants.compiler')}: {compiler.GOOS}/{compiler.GOARCH}
+          </span>
+          <span className="compiler-tag mono">{compiler.Targets?.length || 0} targets</span>
+          <span className="compiler-tag mono">{compiler.CrossCompilers?.length || 0} cross-compilers</span>
+          {compiler.CrossCompilers?.map((cc) => (
+            <span key={`${cc.TargetGOOS}/${cc.TargetGOARCH}`} className="compiler-tag mono">
+              {cc.TargetGOOS}/{cc.TargetGOARCH}
+            </span>
+          ))}
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
+import ConfirmDialog from '../common/ConfirmDialog'
 
 const HIVES = ['HKEY_LOCAL_MACHINE', 'HKEY_CURRENT_USER', 'HKEY_CLASSES_ROOT', 'HKEY_USERS', 'HKEY_CURRENT_CONFIG']
 
@@ -21,6 +22,8 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
   const [writeKey, setWriteKey] = useState('')
   const [writeValue, setWriteValue] = useState('')
   const [writeType, setWriteType] = useState('string')
+  const [confirmDel, setConfirmDel] = useState<RegItem | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const browse = async (p: string) => {
     if (os !== 'windows') return
@@ -72,6 +75,23 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
       browse(path)
     } catch (e) {
       setError((e as Error).message)
+    }
+  }
+
+  const del = async (item: RegItem) => {
+    setDeleting(true)
+    setError('')
+    setMessage('')
+    try {
+      await api.regDeleteKey(sessionId, hive, path, item.name)
+      setMessage(t('registry.deleted', { key: item.name }))
+      if (readValue && readValue.key === item.name) setReadValue(null)
+      browse(path)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setDeleting(false)
+      setConfirmDel(null)
     }
   }
 
@@ -151,6 +171,16 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
                       </svg>
                     )}
                     <span className="mono">{it.name}</span>
+                    <button
+                      className="reg-del"
+                      title={t('registry.delete')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirmDel(it)
+                      }}
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
               </div>
@@ -235,6 +265,24 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           {t('registry.write')}
         </button>
       </div>
+      <ConfirmDialog
+        open={!!confirmDel}
+        title={t('registry.confirmDelete')}
+        danger
+        busy={deleting}
+        confirmLabel={t('registry.delete')}
+        onConfirm={() => confirmDel && del(confirmDel)}
+        onCancel={() => setConfirmDel(null)}
+      >
+        <p>
+          {confirmDel
+            ? t('registry.confirmDeleteBody', {
+                name: confirmDel.name,
+                path: path || hive,
+              })
+            : ''}
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }

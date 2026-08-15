@@ -25,6 +25,22 @@ function toneForType(t: string): 'green' | 'blue' | 'yellow' {
   return 'yellow'
 }
 
+function isTextFile(name: string): boolean {
+  return /\.(txt|log|json|csv|xml|yml|yaml|ini|conf|sh|bat|ps1|py|md|html?|js|ts)$/i.test(name)
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      resolve(result.split(',')[1] || '')
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function LootPage() {
   const { t } = useTranslation()
   const toast = useToast()
@@ -37,11 +53,23 @@ export default function LootPage() {
   const [loadingContent, setLoadingContent] = useState(false)
   const [removing, setRemoving] = useState<LootEntry | null>(null)
   const [busy, setBusy] = useState(false)
+  const [fullEntry, setFullEntry] = useState<LootEntry | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addBusy, setAddBusy] = useState(false)
+  const [addType, setAddType] = useState<'file' | 'credential'>('file')
+  const [addName, setAddName] = useState('')
+  const [addFile, setAddFile] = useState<File | null>(null)
+  const [addCredType, setAddCredType] = useState<'up' | 'apikey'>('up')
+  const [addUser, setAddUser] = useState('')
+  const [addPassword, setAddPassword] = useState('')
+  const [addApiKey, setAddApiKey] = useState('')
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
   const load = async () => {
     try {
       setError('')
-      const d = await api.lootList()
+      const d = await api.lootList(filter === 'all' ? undefined : filter.toLowerCase())
       setLoot(d.loot || [])
     } catch (e) {
       setError((e as Error).message)
@@ -54,7 +82,7 @@ export default function LootPage() {
     load()
     const timer = setInterval(load, 10000)
     return () => clearInterval(timer)
-  }, [])
+  }, [filter])
 
   const filtered = useMemo(
     () => (filter === 'all' ? loot : loot.filter((l) => (l.LootType || '').includes(filter))),
@@ -65,8 +93,12 @@ export default function LootPage() {
     setSelected(entry)
     setLoadingContent(true)
     setContent('')
+    setFullEntry(null)
+    setRenaming(false)
+    setRenameValue(entry.Name)
     try {
       const full = await api.lootContent(entry.ID)
+      setFullEntry(full)
       const b64 = full.DataB64 || ''
       setContent(
         (entry.FileType || '').includes('TEXT') ? new TextDecoder('utf-8', { fatal: false }).decode(base64ToBytes(b64)) : `${t('loot.binaryHint')} (${fmtSize(b64.length * 0.75)})`,
@@ -101,6 +133,58 @@ export default function LootPage() {
       toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
     } finally {
       setBusy(false)
+    }
+  }
+
+  const addLoot = async () => {
+    if (!addName) {
+      toast.push('error', t('loot.nameRequired'))
+      return
+    }
+    setAddBusy(true)
+    try {
+      const body: Parameters<typeof api.lootAdd>[0] = { type: addType, name: addName }
+      if (addType === 'file') {
+        if (!addFile) {
+          toast.push('error', t('loot.fileRequired'))
+          setAddBusy(false)
+          return
+        }
+        body.file_name = addFile.name
+        body.file_type = isTextFile(addFile.name) ? 'text' : 'binary'
+        body.file_data_b64 = await fileToBase64(addFile)
+      } else if (addCredType === 'apikey') {
+        body.cred_api_key = addApiKey
+      } else {
+        body.cred_user = addUser
+        body.cred_password = addPassword
+      }
+      await api.lootAdd(body)
+      toast.push('success', t('loot.added', { name: addName }))
+      setAddOpen(false)
+      setAddName('')
+      setAddFile(null)
+      setAddUser('')
+      setAddPassword('')
+      setAddApiKey('')
+      load()
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
+    } finally {
+      setAddBusy(false)
+    }
+  }
+
+  const renameLoot = async () => {
+    if (!selected || !renameValue.trim()) return
+    try {
+      await api.lootRename(selected.ID, renameValue.trim())
+      setSelected({ ...selected, Name: renameValue.trim() })
+      setRenaming(false)
+      toast.push('success', t('loot.renamed', { name: renameValue.trim() }))
+      load()
+    } catch (e) {
+      toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
     }
   }
 
@@ -152,6 +236,9 @@ export default function LootPage() {
               </button>
             ))}
           </div>
+          <button className="btn primary" onClick={() => setAddOpen(true)}>
+            {t('loot.add')}
+          </button>
           <button className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
@@ -184,9 +271,11 @@ export default function LootPage() {
         footer={
           selected && (
             <div className="drawer-actions">
-              <button className="btn" onClick={() => download(selected)}>
-                {t('loot.download')}
-              </button>
+              {selected.LootType.includes('FILE') && (
+                <button className="btn" onClick={() => download(selected)}>
+                  {t('loot.download')}
+                </button>
+              )}
               <button className="btn danger" onClick={() => setRemoving(selected)}>
                 {t('loot.remove')}
               </button>
@@ -197,6 +286,33 @@ export default function LootPage() {
         {selected && (
           <div className="task-detail">
             <div className="kv">
+              <div className="side-row">
+                <span className="side-label">{t('loot.thName')}</span>
+                {renaming ? (
+                  <div className="rename-inline">
+                    <input className="input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+                    <button className="btn sm primary" onClick={renameLoot} disabled={!renameValue.trim()}>
+                      {t('common.save')}
+                    </button>
+                    <button
+                      className="btn sm"
+                      onClick={() => {
+                        setRenaming(false)
+                        setRenameValue(selected.Name)
+                      }}
+                    >
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rename-inline">
+                    <span className="side-value">{selected.Name}</span>
+                    <button className="btn sm" onClick={() => setRenaming(true)}>
+                      {t('loot.rename')}
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="side-row">
                 <span className="side-label">{t('loot.thType')}</span>
                 <StatusBadge tone={toneForType(selected.LootType)}>{selected.LootType}</StatusBadge>
@@ -215,15 +331,93 @@ export default function LootPage() {
                   <span className="side-value mono">{selected.File}</span>
                 </div>
               )}
+              {selected.LootType.includes('CREDENTIAL') && (
+                <>
+                  <div className="side-row">
+                    <span className="side-label">{t('loot.credUser')}</span>
+                    <span className="side-value mono">{(fullEntry || selected).CredUser || '—'}</span>
+                  </div>
+                  <div className="side-row">
+                    <span className="side-label">{t('loot.credPassword')}</span>
+                    <span className="side-value mono">{(fullEntry || selected).CredPassword || '—'}</span>
+                  </div>
+                  <div className="side-row">
+                    <span className="side-label">{t('loot.credApiKey')}</span>
+                    <span className="side-value mono">{(fullEntry || selected).CredAPIKey || '—'}</span>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="task-content">
-              <div className="task-content-header">
-                <span>{t('loot.content')}</span>
+            {selected.LootType.includes('FILE') && (
+              <div className="task-content">
+                <div className="task-content-header">
+                  <span>{t('loot.content')}</span>
+                </div>
+                {loadingContent ? <pre>{t('common.loading')}</pre> : <pre>{content || t('tasks.none')}</pre>}
               </div>
-              {loadingContent ? <pre>{t('common.loading')}</pre> : <pre>{content || t('tasks.none')}</pre>}
-            </div>
+            )}
           </div>
         )}
+      </DetailDrawer>
+      <DetailDrawer
+        open={addOpen}
+        title={t('loot.addTitle')}
+        subtitle={t('loot.addSub')}
+        onClose={() => setAddOpen(false)}
+        footer={
+          <div className="drawer-actions">
+            <button className="btn" onClick={() => setAddOpen(false)}>
+              {t('common.cancel')}
+            </button>
+            <button className="btn primary" disabled={addBusy} onClick={addLoot}>
+              {t('loot.add')}
+            </button>
+          </div>
+        }
+      >
+        <div className="form">
+          <label className="form-label">{t('loot.addType')}</label>
+          <div className="seg">
+            <button className={addType === 'file' ? 'active' : ''} onClick={() => setAddType('file')}>
+              {t('loot.filterFiles')}
+            </button>
+            <button className={addType === 'credential' ? 'active' : ''} onClick={() => setAddType('credential')}>
+              {t('loot.filterCreds')}
+            </button>
+          </div>
+          <label className="form-label">{t('loot.thName')}</label>
+          <input className="input" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={t('loot.namePlaceholder')} />
+          {addType === 'file' ? (
+            <>
+              <label className="form-label">{t('loot.fileField')}</label>
+              <input className="input" type="file" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
+            </>
+          ) : (
+            <>
+              <div className="seg">
+                <button className={addCredType === 'up' ? 'active' : ''} onClick={() => setAddCredType('up')}>
+                  {t('loot.credUp')}
+                </button>
+                <button className={addCredType === 'apikey' ? 'active' : ''} onClick={() => setAddCredType('apikey')}>
+                  {t('loot.credApiKey')}
+                </button>
+              </div>
+              {addCredType === 'up' ? (
+                <>
+                  <label className="form-label">{t('loot.credUser')}</label>
+                  <input className="input" value={addUser} onChange={(e) => setAddUser(e.target.value)} />
+                  <label className="form-label">{t('loot.credPassword')}</label>
+                  <input className="input" type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} />
+                </>
+              ) : (
+                <>
+                  <label className="form-label">{t('loot.credApiKey')}</label>
+                  <input className="input" value={addApiKey} onChange={(e) => setAddApiKey(e.target.value)} />
+                </>
+              )}
+            </>
+          )}
+        </div>
       </DetailDrawer>
       <ConfirmDialog
         open={!!removing}

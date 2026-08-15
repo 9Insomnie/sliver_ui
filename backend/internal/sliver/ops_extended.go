@@ -282,3 +282,22 @@ func (c *Client) RegistryCreateKey(sessionID, hive, path, key string) error {
 	}
 	return nil
 }
+
+// RegistryDeleteKey deletes a registry key or value on a windows session.
+func (c *Client) RegistryDeleteKey(sessionID, hive, path, key string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), opTimeout)
+	defer cancel()
+	resp, err := c.RPC.RegistryDeleteKey(ctx, &sliverpb.RegistryDeleteKeyReq{
+		Hive:    hive,
+		Path:    path,
+		Key:     key,
+		Request: &commonpb.Request{SessionID: sessionID},
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Response != nil && resp.Response.Err != "" {
+		return fmt.Errorf("%s", resp.Response.Err)
+	}
+	return nil
+}

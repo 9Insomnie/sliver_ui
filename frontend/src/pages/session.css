@@ -107,6 +107,18 @@
   font-size: var(--fs-xs);
 }
 
+.rename-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.rename-inline .input {
+  width: 150px;
+  padding: 4px 8px;
+  font-size: var(--fs-sm);
+}
+
 .side-actions {
   display: flex;
   flex-direction: column;
@@ -403,6 +415,25 @@
 }
 .reg-item .reg-icon.dir {
   color: var(--yellow);
+}
+.reg-item .reg-del {
+  margin-left: auto;
+  visibility: hidden;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.reg-item:hover .reg-del {
+  visibility: visible;
+}
+.reg-item .reg-del:hover {
+  color: var(--red);
+  background: rgba(255, 60, 100, 0.1);
 }
 
 .reg-value {

@@ -24,6 +24,29 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
   const [running, setRunning] = useState(false)
+  const [reconSec, setReconSec] = useState('60')
+  const [reconMsg, setReconMsg] = useState('')
+  const [reconError, setReconError] = useState('')
+  const [reconfiguring, setReconfiguring] = useState(false)
+
+  const reconfigure = async () => {
+    const seconds = Number(reconSec)
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      setReconError(t('advanced.reconInvalid'))
+      return
+    }
+    setReconfiguring(true)
+    setReconError('')
+    setReconMsg('')
+    try {
+      await api.reconfigureSession(sessionId, Math.round(seconds))
+      setReconMsg(t('advanced.reconDone', { seconds }))
+    } catch (e) {
+      setReconError((e as Error).message)
+    } finally {
+      setReconfiguring(false)
+    }
+  }
 
   const run = async () => {
     if (!file) return
@@ -52,8 +75,29 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="card">
-      <div className="card-title">{t('advanced.title')}</div>
+    <>
+      <div className="card">
+        <div className="card-title">{t('advanced.reconTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.reconInterval')}</label>
+            <input value={reconSec} onChange={(e) => setReconSec(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={reconfigure} disabled={reconfiguring}>
+              {reconfiguring ? t('common.loading') : t('advanced.reconApply')}
+            </button>
+          </div>
+        </div>
+        {reconError && <div className="error-banner">{reconError}</div>}
+        {reconMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {reconMsg}
+          </div>
+        )}
+      </div>
+      <div className="card">
+        <div className="card-title">{t('advanced.title')}</div>
       <div className="form-grid" style={{ marginBottom: 12 }}>
         <div className="field">
           <label>{t('advanced.mode')}</label>
@@ -96,6 +140,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           <pre>{output}</pre>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
