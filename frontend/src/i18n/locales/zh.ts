@@ -3,10 +3,13 @@ export default {
     title: 'Sliver UI',
     connected: '已连接 v{{version}}',
     notConnected: '未连接',
+    connecting: '连接中…',
     offline: '服务器不可达 — 请在设置中重新连接以恢复实时数据',
     language: '语言',
     workspace: '工作区',
     favorites: '收藏',
+    collapse: '收起侧栏',
+    expand: '展开侧栏',
   },
   nav: {
     group: {

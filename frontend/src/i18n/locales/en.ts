@@ -3,10 +3,13 @@ export default {
     title: 'Sliver UI',
     connected: 'Connected v{{version}}',
     notConnected: 'Not connected',
+    connecting: 'Connecting…',
     offline: 'Server unreachable — reconnect in Settings to restore real data',
     language: 'Language',
     workspace: 'Workspace',
     favorites: 'Favorites',
+    collapse: 'Collapse sidebar',
+    expand: 'Expand sidebar',
   },
   nav: {
     group: {

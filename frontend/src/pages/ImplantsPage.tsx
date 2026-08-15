@@ -445,7 +445,7 @@ export default function ImplantsPage() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card card-flush">
         <table className="data">
           <thead>
             <tr>

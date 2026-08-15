@@ -128,6 +128,13 @@ func (c *Client) Jobs() ([]JobView, error) {
 		if j == nil {
 			continue
 		}
+		// The server reports its own client/gRPC listener as a job
+		// ("grpc/mtls", Description "client listener"). That is the
+		// port sliver clients (and this UI) connect to — not an implant
+		// C2 listener — so it must not show up on the listeners page.
+		if j.Description == "client listener" {
+			continue
+		}
 		domains := j.Domains
 		if domains == nil {
 			domains = []string{}

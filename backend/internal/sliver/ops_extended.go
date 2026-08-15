@@ -82,11 +82,19 @@ func (c *Client) SpawnDll(sessionID string, data []byte, processName, args, entr
 }
 
 // --- Migrate — process migration ---
+//
+// Guard: sliver-server's Migrate RPC dereferences req.Config (config.Format = ...)
+// without nil-checking, panicking (and crashing the server) when Config is nil.
+// Always send a non-nil Config with the default HTTP C2 profile, mirroring the
+// official client (migrate.go).
 func (c *Client) Migrate(sessionID string, pid uint32) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	resp, err := c.RPC.Migrate(ctx, &clientpb.MigrateReq{
-		Pid:     pid,
+		Pid: pid,
+		Config: &clientpb.ImplantConfig{
+			HTTPC2ConfigName: "default",
+		},
 		Request: &commonpb.Request{SessionID: sessionID},
 	})
 	if err != nil {
@@ -172,12 +180,20 @@ func (c *Client) RevToSelf(sessionID string) error {
 }
 
 // --- GetSystem — Windows SYSTEM escalation ---
+//
+// Guard: sliver-server's GetSystem RPC dereferences req.Config.HTTPC2ConfigName
+// without nil-checking Config, panicking (and crashing the server) when Config
+// is nil. Always send a non-nil Config with the default HTTP C2 profile, mirroring
+// the official client (getsystem.go).
 func (c *Client) GetSystem(sessionID, hostingProcess string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	resp, err := c.RPC.GetSystem(ctx, &clientpb.GetSystemReq{
 		HostingProcess: hostingProcess,
-		Request:        &commonpb.Request{SessionID: sessionID},
+		Config: &clientpb.ImplantConfig{
+			HTTPC2ConfigName: "default",
+		},
+		Request: &commonpb.Request{SessionID: sessionID},
 	})
 	if err != nil {
 		return err

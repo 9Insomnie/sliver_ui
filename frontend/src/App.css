@@ -25,6 +25,18 @@
   background: var(--bg);
 }
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-toggle {
+  flex-shrink: 0;
+}
+
 .topbar-breadcrumb {
   display: flex;
   align-items: center;
@@ -32,6 +44,11 @@
   font-size: var(--fs-sm);
   color: var(--text-dim);
   min-width: 0;
+  overflow: hidden;
+}
+
+.topbar-breadcrumb > span {
+  white-space: nowrap;
 }
 
 .topbar-ws {
@@ -462,6 +479,131 @@ nav {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────
+   侧栏:宽屏 240px → 中屏 200px → 折叠图标栏 56px(按钮切换)。
+   顶栏左侧=汉堡 + breadcrumb;窄屏下 breadcrumb 收缩省略。 */
+.sidebar {
+  width: 240px;
+  transition: width var(--dur-3) var(--ease-out);
+}
+
+/* 折叠态 — 只保留图标,文字全部隐藏 */
+.app.sidebar-collapsed .sidebar {
+  width: 56px;
+}
+
+.app.sidebar-collapsed .logo {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app.sidebar-collapsed .logo-text,
+.app.sidebar-collapsed .logo-caret,
+.app.sidebar-collapsed .nav-section-title,
+.app.sidebar-collapsed .nav-badge,
+.app.sidebar-collapsed .star-toggle,
+.app.sidebar-collapsed .nav-empty,
+.app.sidebar-collapsed .nav-section-count,
+.app.sidebar-collapsed .conn-status span:last-child,
+.app.sidebar-collapsed .lang-switch span {
+  display: none;
+}
+
+.app.sidebar-collapsed nav {
+  overflow-x: hidden;
+}
+
+.app.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app.sidebar-collapsed .nav-item.active::before {
+  left: -10px;
+  right: auto;
+}
+
+.app.sidebar-collapsed .sidebar-footer {
+  align-items: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app.sidebar-collapsed .conn-status {
+  justify-content: center;
+}
+
+.app.sidebar-collapsed .lang-switch {
+  width: 100%;
+}
+
+/* 中屏:侧栏略窄 + 顶栏更紧凑 */
+@media (max-width: 1100px) {
+  .sidebar {
+    width: 200px;
+  }
+  .app.sidebar-collapsed .sidebar {
+    width: 56px;
+  }
+  .topbar {
+    padding: 0 14px;
+  }
+}
+
+/* 窄屏:强制紧凑,折叠侧栏优先展示内容 */
+@media (max-width: 760px) {
+  .app .sidebar {
+    width: 56px;
+  }
+  .app:not(.sidebar-collapsed) .sidebar {
+    width: 56px;
+  }
+  .app .logo {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .app .logo-text,
+  .app .logo-caret,
+  .app .nav-section-title,
+  .app .nav-badge,
+  .app .star-toggle,
+  .app .nav-empty,
+  .app .nav-section-count,
+  .app .conn-status span:last-child,
+  .app .lang-switch span {
+    display: none;
+  }
+  .app .nav-item {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .app .nav-item.active::before {
+    left: -10px;
+    right: auto;
+  }
+  .app .sidebar-footer {
+    align-items: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .app .conn-status {
+    justify-content: center;
+  }
+  .app .lang-switch {
+    width: 100%;
+  }
+  .topbar {
+    padding: 0 10px;
+  }
+  .topbar-breadcrumb {
+    display: none;
   }
 }
 

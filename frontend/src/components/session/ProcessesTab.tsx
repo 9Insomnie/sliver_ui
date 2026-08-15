@@ -76,7 +76,7 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="card card-flush">
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'flex-end' }}>
         <button className="btn sm" onClick={load}>
           {t('processes.refresh')}

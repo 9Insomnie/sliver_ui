@@ -157,6 +157,11 @@ export const ICONS: Record<string, ReactNode> = {
       <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
     </svg>
   ),
+  menu: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  ),
   star: (
     <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
       <path d="M12 2.5 14.94 8.5 21.5 9.46l-4.75 4.62L17.88 21 12 17.77 6.12 21l1.13-6.92L2.5 9.46 9.06 8.5 12 2.5z" />

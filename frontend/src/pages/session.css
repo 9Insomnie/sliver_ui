@@ -229,7 +229,8 @@
 }
 
 .tab-content .card {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* ─── Files tab ───────────────────────────────────────────────── */
@@ -559,3 +560,17 @@
 
 
 /* .code-inline 已合并到 pages.css 的 .code,统一使用 .code 类 */
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .issue-layout {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .issue-side {
+    width: 100%;
+  }
+  .issue-header {
+    flex-wrap: wrap;
+  }
+}

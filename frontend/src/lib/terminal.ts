@@ -17,11 +17,23 @@ export function encodeFrame(type: number, payload: string | Uint8Array): ArrayBu
   return buf
 }
 
-export function decodeFrame(buf: ArrayBuffer): WsFrame | null {
-  if (buf.byteLength < 5) return null
-  const view = new DataView(buf)
-  const type = view.getUint8(0)
-  const len = view.getUint32(1, false)
-  const payload = new Uint8Array(buf, 5, Math.min(len, buf.byteLength - 5))
-  return { type, payload }
+export function decodeFrame(data: ArrayBuffer | string | unknown): WsFrame | null {
+  if (typeof data === 'string') {
+    const bytes = new TextEncoder().encode(data)
+    if (bytes.length < 5) return null
+    const type = bytes[0]
+    const len =
+      (bytes[1] << 24) | (bytes[2] << 16) | (bytes[3] << 8) | bytes[4]
+    const payload = bytes.subarray(5, 5 + Math.min(len, bytes.length - 5))
+    return { type, payload }
+  }
+  if (data instanceof ArrayBuffer) {
+    if (data.byteLength < 5) return null
+    const view = new DataView(data)
+    const type = view.getUint8(0)
+    const len = view.getUint32(1, false)
+    const payload = new Uint8Array(data, 5, Math.min(len, data.byteLength - 5))
+    return { type, payload }
+  }
+  return null
 }

@@ -25,6 +25,7 @@ type GenerateRequest struct {
 	Interval  int64 `json:"interval"`
 	Jitter    int64 `json:"jitter"`
 	MaxErrors int32 `json:"maxConnectionErrors"`
+	IsBeacon  bool  `json:"is_beacon"`
 	Debug     bool  `json:"debug"`
 	Evasion   bool  `json:"evasion"`
 	Obfuscate bool  `json:"obfuscate"`
@@ -225,15 +226,16 @@ func buildImplantConfig(req *GenerateRequest, isBeacon bool) *clientpb.ImplantCo
 	}
 
 	cfg := &clientpb.ImplantConfig{
-		GOOS:             req.OS,
-		GOARCH:           req.Arch,
-		Format:           format,
-		Debug:            req.Debug,
-		Evasion:          req.Evasion,
-		ObfuscateSymbols: req.Obfuscate,
-		IsBeacon:         isBeacon,
-		BeaconInterval:   req.Interval,
-		BeaconJitter:     req.Jitter,
+		GOOS:               req.OS,
+		GOARCH:             req.Arch,
+		Format:             format,
+		Debug:              req.Debug,
+		Evasion:            req.Evasion,
+		ObfuscateSymbols:   req.Obfuscate,
+		IsBeacon:           isBeacon,
+		BeaconInterval:     req.Interval,
+		BeaconJitter:       req.Jitter,
+		HTTPC2ConfigName:   "default",
 		ConnectionStrategy: "sequential",
 	}
 	if isBeacon {
@@ -277,7 +279,7 @@ func (c *Client) GenerateImplant(req *GenerateRequest) (map[string]any, error) {
 	if req.Name == "" {
 		return nil, fmt.Errorf("implant name is required")
 	}
-	cfg := buildImplantConfig(req, false)
+	cfg := buildImplantConfig(req, req.IsBeacon)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
