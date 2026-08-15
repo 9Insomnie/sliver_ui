@@ -18,10 +18,11 @@ import AdvancedTab from '../components/session/AdvancedTab'
 import TokensTab from '../components/session/TokensTab'
 import WgTab from '../components/session/WgTab'
 import PivotTab from '../components/session/PivotTab'
+import ServicesTab from '../components/session/ServicesTab'
 import './pages.css'
 import './session.css'
 
-const TABS = ['files', 'processes', 'network', 'env', 'exec', 'screenshot', 'portfwd', 'registry', 'advanced', 'tokens', 'wg', 'pivot'] as const
+const TABS = ['files', 'processes', 'network', 'env', 'exec', 'screenshot', 'portfwd', 'registry', 'advanced', 'tokens', 'wg', 'pivot', 'services'] as const
 type TabKey = (typeof TABS)[number]
 
 type TFunc = ReturnType<typeof useTranslation>['t']
@@ -195,6 +196,7 @@ export default function SessionDetailPage() {
               {tab === 'tokens' && <TokensTab sessionId={session.ID} os={session.OS} />}
               {tab === 'wg' && <WgTab sessionId={session.ID} isWg={session.Transport === 'wg'} />}
               {tab === 'pivot' && <PivotTab sessionId={session.ID} />}
+              {tab === 'services' && <ServicesTab sessionId={session.ID} os={session.OS} />}
             </div>
           </div>
 

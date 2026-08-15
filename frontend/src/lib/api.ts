@@ -28,6 +28,8 @@ import type {
   WindowsPrivilege,
   PivotListener,
   PivotGraphEntry,
+  SSHCommandResult,
+  CallExtensionResult,
 } from './types'
 
 const BASE = '/api'
@@ -452,6 +454,48 @@ export const api = {
   pivotStopListener: (sessionId: string, id: number) =>
     request<{ ok: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/pivots/listeners/${id}`, {
       method: 'DELETE',
+    }),
+
+  // --- Windows services ---
+  startService: (sessionId: string, opts: { service_name: string; description?: string; bin_path?: string; hostname?: string; arguments?: string }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/services`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  stopService: (sessionId: string, serviceName: string, hostname?: string) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/services/stop`, {
+      method: 'POST',
+      body: JSON.stringify({ service_name: serviceName, hostname: hostname || '' }),
+    }),
+
+  removeService: (sessionId: string, serviceName: string, hostname?: string) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/services/remove`, {
+      method: 'POST',
+      body: JSON.stringify({ service_name: serviceName, hostname: hostname || '' }),
+    }),
+
+  // --- SSH ---
+  runSSHCommand: (sessionId: string, opts: { username: string; hostname: string; port?: number; command: string; password?: string; priv_key?: string }) =>
+    request<SSHCommandResult>(`/sessions/${encodeURIComponent(sessionId)}/ssh`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  // --- Extensions ---
+  listExtensions: (sessionId: string) =>
+    request<{ names: string[] }>(`/sessions/${encodeURIComponent(sessionId)}/extensions`),
+
+  registerExtension: (sessionId: string, opts: { name: string; os: string; init: string; data_b64: string }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/extensions/register`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  callExtension: (sessionId: string, opts: { name: string; export: string; server_store?: boolean; args_b64?: string }) =>
+    request<CallExtensionResult>(`/sessions/${encodeURIComponent(sessionId)}/extensions/call`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
     }),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
