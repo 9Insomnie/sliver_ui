@@ -62,7 +62,12 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          go build -o ../sliver-ui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} .
+          ldflags="-s -w"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            # GUI subsystem: the .exe starts without a cmd console window
+            ldflags="$ldflags -H=windowsgui"
+          fi
+          go build -ldflags "$ldflags" -o ../sliver-ui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} .
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
