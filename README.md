@@ -149,17 +149,6 @@ Flags:
 
 ---
 
-## Docker
-
-```bash
-docker build -t sliver-ui .
-docker run -p 8080:8080 sliver-ui
-```
-
-The image is a multi-stage build (Node → Go → Alpine runtime) and runs as a non-root user.
-
----
-
 ## Releases
 
 Tag a release to trigger the [release workflow](.github/workflows/release.yml):
@@ -209,7 +198,6 @@ sliver_ui/
 │   │   └── lib/             # api client, types, connection state, terminal
 │   ├── package.json
 │   └── vite.config.ts
-├── Dockerfile
 ├── Makefile
 └── start.ps1 / start.sh     # one-command dev scripts
 ```

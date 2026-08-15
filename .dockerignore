@@ -1,8 +1,0 @@
-.git
-.gotmp
-**/node_modules
-**/*.log
-frontend/dist
-backend/web/dist
-*.exe
-*.test
