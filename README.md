@@ -17,6 +17,9 @@
   <a href="https://github.com/9Insomnie/sliver_ui">
     <img src="https://img.shields.io/github/last-commit/9Insomnie/sliver_ui?style=flat-square" alt="Last Commit">
   </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/9Insomnie/sliver_ui?style=flat-square" alt="License">
+  </a>
 </p>
 
 A browser-based interface for interacting with and managing [Sliver](https://github.com/BishopFox/sliver) — the open-source adversary simulation and C2 framework.
@@ -270,6 +273,12 @@ Rulesets on `main` require changes to land via a pull request; force-pushes to `
 ## Disclaimer
 
 Sliver UI is provided for authorized security testing, research, education, and adversary simulation, **as-is**, without warranty of any kind. The maintainers and contributors are not responsible for unauthorized use, damage to systems, data loss, operational disruption, or violations of applicable laws. Always obtain appropriate authorization before use.
+
+---
+
+## License
+
+Sliver UI is released under the [MIT License](LICENSE).
 
 ---
 
