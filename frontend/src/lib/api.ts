@@ -26,6 +26,8 @@ import type {
   WGTCPForwarder,
   WGSocksServer,
   WindowsPrivilege,
+  PivotListener,
+  PivotGraphEntry,
 } from './types'
 
 const BASE = '/api'
@@ -433,6 +435,23 @@ export const api = {
     request<{ output: string; async: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/runas`, {
       method: 'POST',
       body: JSON.stringify({ username, process_name: processName, args }),
+    }),
+
+  // --- Pivots ---
+  pivotGraph: () => request<{ Children: PivotGraphEntry[] }>(`/pivots/graph`),
+
+  pivotListeners: (sessionId: string) =>
+    request<{ listeners: PivotListener[] }>(`/sessions/${encodeURIComponent(sessionId)}/pivots/listeners`),
+
+  pivotStartListener: (sessionId: string, type: string, bindAddress: string) =>
+    request<PivotListener>(`/sessions/${encodeURIComponent(sessionId)}/pivots/listeners`, {
+      method: 'POST',
+      body: JSON.stringify({ type, bind_address: bindAddress }),
+    }),
+
+  pivotStopListener: (sessionId: string, id: number) =>
+    request<{ ok: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/pivots/listeners/${id}`, {
+      method: 'DELETE',
     }),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>

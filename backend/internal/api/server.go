@@ -112,6 +112,10 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}/token-owner", s.handleCurrentTokenOwner)
 	mux.HandleFunc("POST /api/sessions/{id}/execute-token", s.handleExecuteToken)
 	mux.HandleFunc("POST /api/sessions/{id}/runas", s.handleRunAs)
+	mux.HandleFunc("GET /api/pivots/graph", s.handlePivotGraph)
+	mux.HandleFunc("GET /api/sessions/{id}/pivots/listeners", s.handlePivotListeners)
+	mux.HandleFunc("POST /api/sessions/{id}/pivots/listeners", s.handlePivotStartListener)
+	mux.HandleFunc("DELETE /api/sessions/{id}/pivots/listeners/{pivotID}", s.handlePivotStopListener)
 	mux.HandleFunc("POST /api/sessions/{id}/ping", s.handlePing)
 
 	mux.HandleFunc("GET /api/sessions/{id}/reg/subkeys", s.handleRegSubKeys)
