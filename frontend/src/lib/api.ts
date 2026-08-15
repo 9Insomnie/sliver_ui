@@ -518,6 +518,25 @@ export const api = {
       body: JSON.stringify(opts),
     }),
 
+  // --- Implant operations ---
+  backdoor: (sessionId: string, opts: { file_path: string; profile_name: string }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/backdoor`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  hijackDll: (sessionId: string, opts: { reference_dll_path: string; target_location: string; reference_dll_b64: string; target_dll_b64: string; profile_name: string }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/dll-hijack`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  shellcodeRdi: (opts: { data_b64: string; function_name: string; arguments: string }) =>
+    request<{ DataB64: string; Size: number }>(`/shellcode/rdi`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {
       method: 'POST',
