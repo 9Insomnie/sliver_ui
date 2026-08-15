@@ -22,6 +22,13 @@ describe('api client', () => {
     expect(result).toEqual({ version: '1.5.30', connected: true })
   })
 
+  it('info() reflects disconnected state', async () => {
+    mockFetch(200, { connected: false })
+    const result = await api.info()
+    expect(result.connected).toBe(false)
+    expect(result.version).toBeUndefined()
+  })
+
   it('sessions() GETs /api/sessions and returns list', async () => {
     const fn = mockFetch(200, {
       sessions: [
@@ -77,6 +84,29 @@ describe('api client', () => {
     expect(res.success).toBe(true)
     const [, opts] = fn.mock.calls[0]
     expect(JSON.parse(opts.body)).toMatchObject({ name: 'implant', os: 'windows' })
+  })
+
+  it('regenerate() POSTs the implant name', async () => {
+    const fn = mockFetch(200, { success: true, name: 'foo.exe', data: 'aGVsbG8=' })
+    const res = await api.regenerate('foo')
+    expect(res.name).toBe('foo.exe')
+    expect(res.data).toBe('aGVsbG8=')
+    const [, opts] = fn.mock.calls[0]
+    expect(opts.method).toBe('POST')
+    expect(JSON.parse(opts.body)).toEqual({ implantName: 'foo' })
+  })
+
+  it('deleteImplantBuild() sends DELETE with build name', async () => {
+    const fn = mockFetch(200, { success: true })
+    await api.deleteImplantBuild('foo')
+    expect(fn).toHaveBeenCalledWith('/api/implant-builds/foo', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('binary helpers round-trip base64', async () => {
+    const { base64ToBytes, bytesToText } = await import('../../lib/binary')
+    const bytes = base64ToBytes('aGVsbG8=')
+    expect(bytesToText('aGVsbG8=')).toBe('hello')
+    expect(new Uint8Array(bytes)[0]).toBe(0x68)
   })
 
   it('wsUrl uses ws protocol for http pages', () => {

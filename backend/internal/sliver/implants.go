@@ -2,6 +2,7 @@ package sliver
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -247,10 +248,15 @@ func (c *Client) GenerateImplant(req *GenerateRequest) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	var data string
+	if resp.File != nil {
+		data = base64.StdEncoding.EncodeToString(resp.File.Data)
+	}
 	return map[string]any{
 		"success": true,
 		"message": fmt.Sprintf("built %s (%s/%s)", resp.File.Name, req.OS, req.Arch),
 		"name":    resp.File.Name,
+		"data":    data,
 	}, nil
 }
 

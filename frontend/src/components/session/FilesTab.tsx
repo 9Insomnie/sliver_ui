@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
+import { base64ToBytes, bytesToText, triggerDownload } from '../../lib/binary'
 import type { DirView } from '../../lib/types'
 import '../../pages/pages.css'
 
@@ -281,30 +282,4 @@ function arrayBufferToBase64(buf: ArrayBuffer): string {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
   }
   return btoa(binary)
-}
-
-function base64ToBytes(b64: string): ArrayBuffer {
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes.buffer
-}
-
-function triggerDownload(name: string, bytes: ArrayBuffer) {
-  const blob = new Blob([bytes])
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name.split(/[\\/]/).pop() || name
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-function bytesToText(b64: string): string {
-  try {
-    const buf = base64ToBytes(b64)
-    return new TextDecoder('utf-8', { fatal: false }).decode(buf)
-  } catch {
-    return b64
-  }
 }

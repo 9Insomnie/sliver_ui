@@ -2,6 +2,7 @@ package sliver
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -221,6 +222,7 @@ type RegenerateResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Name    string `json:"name"`
+	Data    string `json:"data"`
 }
 
 func (c *Client) Regenerate(implantName string) (*RegenerateResult, error) {
@@ -230,10 +232,15 @@ func (c *Client) Regenerate(implantName string) (*RegenerateResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	var data string
+	if resp.File != nil {
+		data = base64.StdEncoding.EncodeToString(resp.File.Data)
+	}
 	return &RegenerateResult{
 		Success: true,
 		Message: fmt.Sprintf("regenerated %s", implantName),
 		Name:    resp.File.Name,
+		Data:    data,
 	}, nil
 }
 

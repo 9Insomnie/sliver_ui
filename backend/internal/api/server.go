@@ -70,6 +70,7 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/info", s.handleInfo)
+	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.HandleFunc("POST /api/connect", s.handleConnect)
 	mux.HandleFunc("POST /api/disconnect", s.handleDisconnect)
 	mux.HandleFunc("GET /api/profiles", s.handleListProfiles)
@@ -180,6 +181,61 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"connected": true, "version": ver})
+}
+
+// handleOverview aggregates top-level counts for the sidebar badges and dashboard.
+func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	type countResult struct {
+		key string
+		n   int
+		err error
+	}
+	results := make(chan countResult, 8)
+	run := func(key string, fn func() (int, error)) {
+		go func() {
+			n, err := fn()
+			results <- countResult{key: key, n: n, err: err}
+		}()
+	}
+
+	run("sessions", func() (int, error) {
+		ss, err := c.Sessions()
+		return len(ss), err
+	})
+	run("beacons", func() (int, error) {
+		bs, err := c.Beacons()
+		return len(bs), err
+	})
+	run("jobs", func() (int, error) {
+		js, err := c.Jobs()
+		return len(js), err
+	})
+	run("builders", func() (int, error) {
+		bs, err := c.ImplantBuilds()
+		return len(bs), err
+	})
+	run("socks", func() (int, error) {
+		return len(c.Socks().List()), nil
+	})
+
+	out := map[string]int{"sessions": 0, "beacons": 0, "jobs": 0, "builders": 0, "socks": 0}
+	timeout := time.After(12 * time.Second)
+	for i := 0; i < 5; i++ {
+		select {
+		case res := <-results:
+			if res.err == nil {
+				out[res.key] = res.n
+			}
+		case <-timeout:
+			writeErr(w, http.StatusGatewayTimeout, "overview collection timed out")
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"counts": out})
 }
 
 type connectRequest struct {

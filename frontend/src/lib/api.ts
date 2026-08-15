@@ -16,6 +16,8 @@ import type {
   BeaconTask,
   SocksProxy,
   ImplantProfile,
+  ServerInfo,
+  OverviewData,
 } from './types'
 
 const BASE = '/api'
@@ -31,7 +33,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  info: () => request<{ version: string }>('/info'),
+  info: () => request<ServerInfo>('/info'),
+
+  overview: () => request<OverviewData>('/overview'),
 
   connect: (config: { name: string; lhost: string; lport: number }) =>
     request<{ success: boolean; error?: string }>('/connect', { method: 'POST', body: JSON.stringify(config) }),
@@ -53,7 +57,7 @@ export const api = {
   builders: () => request<{ builders: ImplantBuild[] }>('/builders'),
 
   generate: (config: Partial<ImplantConfig>) =>
-    request<GenerateResult>('/generate', { method: 'POST', body: JSON.stringify(config) }),
+    request<GenerateResult>(`/generate`, { method: 'POST', body: JSON.stringify(config) }),
 
   startListener: (job: { type: string; addr: string; port: number; tls: boolean }) =>
     request<{ success: boolean; error?: string }>('/listeners', { method: 'POST', body: JSON.stringify(job) }),
@@ -272,7 +276,7 @@ export const api = {
     request<{ success: boolean }>(`/implant-builds/${name}`, { method: 'DELETE' }),
 
   regenerate: (implantName: string) =>
-    request<{ success: boolean; message: string; name: string }>('/regenerate', {
+    request<GenerateResult>('/regenerate', {
       method: 'POST',
       body: JSON.stringify({ implantName }),
     }),

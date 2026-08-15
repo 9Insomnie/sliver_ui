@@ -530,3 +530,61 @@ table.data tbody tr:last-child td {
   background: rgba(0, 0, 0, 0.20);
   color: var(--text);
 }
+
+/* ─── Dashboard ─────────────────────────────────────────────────── */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  text-align: left;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+.dash-stat:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+.dash-stat-value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.dash-stat-label {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 1100px) {
+  .dash-grid {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+.dash-grid .data tbody tr {
+  cursor: pointer;
+}
+.dash-grid .data tbody tr:hover {
+  background: var(--bg-hover);
+}
