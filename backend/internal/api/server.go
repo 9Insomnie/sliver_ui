@@ -129,6 +129,8 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/backdoor", s.handleBackdoor)
 	mux.HandleFunc("POST /api/sessions/{id}/dll-hijack", s.handleHijackDLL)
 	mux.HandleFunc("POST /api/shellcode/rdi", s.handleShellcodeRDI)
+	mux.HandleFunc("POST /api/sessions/{id}/exec-shellcode", s.handleExecuteShellcode)
+	mux.HandleFunc("POST /api/sessions/{id}/psexec", s.handlePsExec)
 	mux.HandleFunc("POST /api/sessions/{id}/ping", s.handlePing)
 
 	mux.HandleFunc("GET /api/sessions/{id}/reg/subkeys", s.handleRegSubKeys)

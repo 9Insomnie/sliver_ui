@@ -538,6 +538,18 @@ export const api = {
       body: JSON.stringify(opts),
     }),
 
+  execShellcode: (sessionId: string, opts: { data_b64: string; pid: number; rwx_pages: boolean }) =>
+    request<{ success: boolean }>(`/sessions/${encodeURIComponent(sessionId)}/exec-shellcode`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
+  psexec: (sessionId: string, opts: { hostname: string; profile_name: string; service_name: string; service_desc: string; bin_path: string }) =>
+    request<{ success: boolean; message: string; path: string; service: string; host: string }>(`/sessions/${encodeURIComponent(sessionId)}/psexec`, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
+
   // --- DNS canaries ---
   canaries: () => request<{ canaries: Canary[] }>('/canaries'),
 

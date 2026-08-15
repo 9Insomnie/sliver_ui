@@ -72,6 +72,22 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
   const [rdiError, setRdiError] = useState('')
   const [rdiRunning, setRdiRunning] = useState(false)
 
+  const [scFile, setScFile] = useState<File | null>(null)
+  const [scPid, setScPid] = useState('')
+  const [scRwx, setScRwx] = useState(true)
+  const [scMsg, setScMsg] = useState('')
+  const [scError, setScError] = useState('')
+  const [scRunning, setScRunning] = useState(false)
+
+  const [peHost, setPeHost] = useState('')
+  const [peProfile, setPeProfile] = useState('')
+  const [peServiceName, setPeServiceName] = useState('Sliver')
+  const [peServiceDesc, setPeServiceDesc] = useState('Sliver implant')
+  const [peBinPath, setPeBinPath] = useState('C:\\Windows\\Temp')
+  const [peMsg, setPeMsg] = useState('')
+  const [peError, setPeError] = useState('')
+  const [peRunning, setPeRunning] = useState(false)
+
   const reconfigure = async () => {
     const seconds = Number(reconSec)
     if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -220,6 +236,42 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
     a.download = 'rdi.bin'
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const runShellcode = async () => {
+    if (!scFile) return
+    setScRunning(true)
+    setScError('')
+    setScMsg('')
+    try {
+      const b64 = await toBase64(scFile)
+      await api.execShellcode(sessionId, { data_b64: b64, pid: Number(scPid) || 0, rwx_pages: scRwx })
+      setScMsg(t('advanced.shellcodeOk'))
+    } catch (e) {
+      setScError((e as Error).message)
+    } finally {
+      setScRunning(false)
+    }
+  }
+
+  const runPsExec = async () => {
+    setPeRunning(true)
+    setPeError('')
+    setPeMsg('')
+    try {
+      const res = await api.psexec(sessionId, {
+        hostname: peHost.trim(),
+        profile_name: peProfile.trim(),
+        service_name: peServiceName.trim() || 'Sliver',
+        service_desc: peServiceDesc.trim() || 'Sliver implant',
+        bin_path: peBinPath.trim() || 'C:\\Windows\\Temp',
+      })
+      setPeMsg(`${t('advanced.psexecOk')} ${res.host} (${res.service})`)
+    } catch (e) {
+      setPeError((e as Error).message)
+    } finally {
+      setPeRunning(false)
+    }
   }
 
   const run = async () => {
@@ -505,6 +557,72 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <button className="btn sm" onClick={downloadRdi}>
               {t('advanced.rdiDownload')}
             </button>
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.shellcodeTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.shellcodeBin')}</label>
+            <input type="file" onChange={(e) => setScFile(e.target.files?.[0] || null)} />
+          </div>
+          <div className="field">
+            <label>PID</label>
+            <input value={scPid} onChange={(e) => setScPid(e.target.value)} placeholder="0" />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+            <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input type="checkbox" checked={scRwx} onChange={(e) => setScRwx(e.target.checked)} />
+              {t('advanced.shellcodeRwx')}
+            </label>
+            <button className="btn primary" onClick={runShellcode} disabled={scRunning || !scFile}>
+              {scRunning ? t('common.loading') : t('advanced.shellcodeRun')}
+            </button>
+          </div>
+        </div>
+        {scError && <div className="error-banner">{scError}</div>}
+        {scMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {scMsg}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">{t('advanced.psexecTitle')}</div>
+        <div className="form-grid" style={{ marginBottom: 12 }}>
+          <div className="field">
+            <label>{t('advanced.psexecHost')}</label>
+            <input value={peHost} onChange={(e) => setPeHost(e.target.value)} placeholder="10.10.0.50" />
+          </div>
+          <div className="field">
+            <label>{t('advanced.psexecProfile')}</label>
+            <input value={peProfile} onChange={(e) => setPeProfile(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.psexecServiceName')}</label>
+            <input value={peServiceName} onChange={(e) => setPeServiceName(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>{t('advanced.psexecServiceDesc')}</label>
+            <input value={peServiceDesc} onChange={(e) => setPeServiceDesc(e.target.value)} />
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label>{t('advanced.psexecBinPath')}</label>
+            <input value={peBinPath} onChange={(e) => setPeBinPath(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" onClick={runPsExec} disabled={peRunning || !peHost || !peProfile}>
+              {peRunning ? t('common.loading') : t('advanced.psexecRun')}
+            </button>
+          </div>
+        </div>
+        {peError && <div className="error-banner">{peError}</div>}
+        {peMsg && (
+          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+            {peMsg}
           </div>
         )}
       </div>
