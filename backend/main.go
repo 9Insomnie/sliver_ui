@@ -55,6 +55,11 @@ func main() {
 
 	// Desktop mode: show the embedded frontend in a native window. The window
 	// event loop blocks until it is closed, then the process exits.
+	// On non-Windows platforms there is no native window, so the default
+	// browser is opened automatically instead.
+	if runtime.GOOS != "windows" && !*noBrowser {
+		openBrowserSoon(url)
+	}
 	time.Sleep(400 * time.Millisecond)
 	runWindow(url)
 }
