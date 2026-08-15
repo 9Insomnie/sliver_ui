@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import { useConnection } from '../lib/connection'
-import type { Session, Job, Event } from '../lib/types'
+import { BarList, Donut, Legend, CHART_COLORS } from '../components/Charts'
+import type { Beacon, Session, Job, Event } from '../lib/types'
 import './pages.css'
 
 type TFunc = ReturnType<typeof useTranslation>['t']
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { connected, counts } = useConnection()
   const [sessions, setSessions] = useState<Session[]>([])
+  const [beacons, setBeacons] = useState<Beacon[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [error, setError] = useState('')
@@ -39,15 +41,17 @@ export default function DashboardPage() {
   const load = useCallback(async () => {
     if (!connected) {
       setSessions([])
+      setBeacons([])
       setJobs([])
       setEvents([])
       return
     }
     setError('')
     try {
-      const [ss, js] = await Promise.all([api.sessions(), api.jobs()])
+      const [ss, js, bs] = await Promise.all([api.sessions(), api.jobs(), api.beacons()])
       setSessions(ss.sessions || [])
       setJobs(js.jobs || [])
+      setBeacons(bs.beacons || [])
       try {
         const ev = await api.events()
         setEvents((ev.events || []).slice(0, 8))
@@ -73,6 +77,88 @@ export default function DashboardPage() {
     { label: t('dashboard.socks'), value: counts.socks, to: '/socks' },
   ]
 
+  const byOs = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const s of sessions) {
+      const os = (s.OS || '').toLowerCase()
+      const key =
+        os === 'darwin' ? 'macOS' : os ? os.charAt(0).toUpperCase() + os.slice(1) : 'Other'
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    const order = ['Windows', 'Linux', 'macOS']
+    const sorted = [...counts.entries()].sort((a, b) => {
+      const ia = order.indexOf(a[0])
+      const ib = order.indexOf(b[0])
+      if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+      return b[1] - a[1]
+    })
+    return sorted.map(([label, value], i) => ({
+      label,
+      value,
+      color: CHART_COLORS[i % CHART_COLORS.length],
+    }))
+  }, [sessions])
+
+  const byTransport = useMemo(() => {
+    const counts = new Map<string, number>()
+    const bump = (t?: string) => {
+      const norm = (t || '').toLowerCase()
+      const key =
+        norm === 'mtls'
+          ? 'mTLS'
+          : norm === 'http'
+            ? 'HTTP'
+            : norm === 'dns'
+              ? 'DNS'
+              : norm === 'wg' || norm === 'wireguard'
+                ? 'WG'
+                : norm
+                  ? norm.toUpperCase()
+                  : 'Other'
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    sessions.forEach((s) => bump(s.Transport))
+    beacons.forEach((b) => bump(b.Transport))
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
+    return sorted.map(([label, value], i) => ({
+      label,
+      value,
+      color: CHART_COLORS[i % CHART_COLORS.length],
+    }))
+  }, [sessions, beacons])
+
+  const topHosts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const s of sessions) {
+      const host = s.Hostname || 'unknown'
+      counts.set(host, (counts.get(host) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([label, value], i) => ({
+        label,
+        value,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      }))
+  }, [sessions])
+
+  const byEvent = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const e of events) {
+      const type = e.Type || 'Unknown'
+      counts.set(type, (counts.get(type) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([label, value], i) => ({
+        label,
+        value,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      }))
+  }, [events])
+
   return (
     <div className="page">
       <div className="page-header">
@@ -97,6 +183,49 @@ export default function DashboardPage() {
             <div className="dash-stat-label">{c.label}</div>
           </button>
         ))}
+      </div>
+
+      <div className="viz-grid">
+        <div className="card viz-card">
+          <div className="card-title" style={{ marginBottom: 14 }}>
+            {t('dashboard.byOs')}
+          </div>
+          <div className="viz-body">
+            <Donut
+              data={byOs}
+              center={String(sessions.length)}
+              centerSub={t('dashboard.total')}
+              emptyText={t('dashboard.noData')}
+            />
+            <Legend data={byOs} />
+          </div>
+        </div>
+        <div className="card viz-card">
+          <div className="card-title" style={{ marginBottom: 14 }}>
+            {t('dashboard.byTransport')}
+          </div>
+          <div className="viz-body">
+            <Donut
+              data={byTransport}
+              center={String(sessions.length + beacons.length)}
+              centerSub={t('dashboard.total')}
+              emptyText={t('dashboard.noData')}
+            />
+            <Legend data={byTransport} />
+          </div>
+        </div>
+        <div className="card viz-card">
+          <div className="card-title" style={{ marginBottom: 14 }}>
+            {t('dashboard.topHosts')}
+          </div>
+          <BarList rows={topHosts} emptyText={t('dashboard.noData')} />
+        </div>
+        <div className="card viz-card">
+          <div className="card-title" style={{ marginBottom: 14 }}>
+            {t('dashboard.activity')}
+          </div>
+          <BarList rows={byEvent} emptyText={t('dashboard.noData')} />
+        </div>
       </div>
 
       <div className="dash-grid">

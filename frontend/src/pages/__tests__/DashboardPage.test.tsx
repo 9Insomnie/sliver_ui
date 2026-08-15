@@ -12,6 +12,7 @@ vi.mock('../../lib/api', () => ({
     overview: vi.fn(),
     sessions: vi.fn(),
     jobs: vi.fn(),
+    beacons: vi.fn().mockResolvedValue({ beacons: [] }),
     events: vi.fn().mockResolvedValue({ events: [] }),
   },
 }))

@@ -7,7 +7,6 @@ export default {
     language: '语言',
     workspace: '工作区',
     favorites: '收藏',
-    search: '搜索或跳转',
   },
   nav: {
     group: {
@@ -59,6 +58,12 @@ export default {
     socks: 'SOCKS5',
     activeSessions: '活跃会话',
     recentActivity: '最近活动',
+    byOs: '按系统分布',
+    byTransport: '传输协议分布',
+    topHosts: '会话数 Top 主机',
+    activity: '按事件类型统计',
+    total: '总计',
+    noData: '暂无数据可展示',
   },
   common: {
     refresh: '刷新',
@@ -79,14 +84,6 @@ export default {
     working: '处理中…',
     empty: '暂无数据',
     viewAll: '查看全部',
-  },
-  palette: {
-    navigate: '导航',
-    targets: '目标',
-    actions: '操作',
-    placeholder: '搜索或跳转...',
-    noResults: '未找到匹配结果',
-    toggleLang: '切换语言为 {{lang}}',
   },
   time: {
     justNow: '刚刚',
@@ -277,6 +274,9 @@ export default {
     credApiKey: 'API 密钥',
     credUser: '用户名',
     credPassword: '密码',
+    copy: '复制',
+    copied: '已复制 {{name}}',
+    metadata: '元数据',
   },
   canaries: {
     title: '蜜标',
