@@ -192,6 +192,37 @@
   margin-top: 2px;
 }
 
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -2px 0 12px;
+}
+
+.viewer {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.viewer-pre {
+  margin: 0;
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+}
+
+.file-name {
+  margin-top: 6px;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}
+
 /* ─── Data table ────────────────────────────────────────────────
    Linear 风格:thead 字号 11、padding 6 12;tbody 行高 36;
    行间分隔只保留下边线,行底色仅在 hover 出现。 */

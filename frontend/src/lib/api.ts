@@ -21,6 +21,7 @@ import type {
   LootEntry,
   CompilerInfo,
   Host,
+  Website,
 } from './types'
 
 const BASE = '/api'
@@ -349,6 +350,32 @@ export const api = {
     request<{ success: boolean }>(`/hosts/${encodeURIComponent(uuid)}/iocs/${encodeURIComponent(iocId)}`, {
       method: 'DELETE',
     }),
+
+  // --- Websites ---
+  websites: () => request<{ websites: Website[] }>('/websites'),
+
+  website: (name: string) => request<Website>(`/websites/${encodeURIComponent(name)}`),
+
+  websiteAddContent: (name: string, body: { path: string; content_type?: string; file_data_b64?: string; text?: string }) =>
+    request<Website>(`/websites/${encodeURIComponent(name)}/content`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  websiteUpdateContent: (name: string, body: { path: string; content_type?: string; file_data_b64?: string; text?: string }) =>
+    request<Website>(`/websites/${encodeURIComponent(name)}/content`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  websiteRemoveContent: (name: string, paths: string[]) =>
+    request<Website>(`/websites/${encodeURIComponent(name)}/content`, {
+      method: 'DELETE',
+      body: JSON.stringify({ paths }),
+    }),
+
+  websiteRemove: (name: string) =>
+    request<{ success: boolean }>(`/websites/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {

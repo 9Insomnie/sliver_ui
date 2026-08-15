@@ -155,6 +155,19 @@ export interface Host {
   IOCs: IOC[]
 }
 
+export interface WebContent {
+  Path: string
+  ContentType: string
+  Size: number
+  DataB64?: string
+}
+
+export interface Website {
+  Name: string
+  Contents: Record<string, WebContent>
+  Size: number
+}
+
 export interface Operator {
   Name: string
   FirstContact: string
