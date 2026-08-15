@@ -298,6 +298,30 @@ export interface WindowsPrivilege {
   UsedForAccess: boolean
 }
 
+export interface NetConnPivot {
+  PeerID: number
+  RemoteAddress: string
+}
+
+export interface PivotListener {
+  ID: number
+  Type: string
+  BindAddress: string
+  Pivots: NetConnPivot[]
+}
+
+export interface PivotGraphEntry {
+  PeerID: number
+  Name: string
+  SessionID: string
+  Hostname: string
+  Username: string
+  OS: string
+  Transport: string
+  RemoteAddress: string
+  Children: PivotGraphEntry[]
+}
+
 export interface PortForward {
   LocalAddr: string
   LocalPort: number

@@ -531,4 +531,31 @@
   margin: 0 2px;
 }
 
+/* ─── Pivot tab ─────────────────────────────────────────────── */
+.pivot-tree {
+  list-style: none;
+  margin: 0;
+  padding-left: 18px;
+  border-left: 1px solid var(--border);
+}
+
+.pivot-tree > li {
+  margin: 6px 0;
+}
+
+.pivot-tree .pivot-tree {
+  margin-top: 4px;
+}
+
+.pivot-node {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+
 /* .code-inline 已合并到 pages.css 的 .code,统一使用 .code 类 */
