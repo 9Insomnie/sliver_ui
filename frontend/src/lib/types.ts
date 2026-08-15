@@ -289,6 +289,15 @@ export interface ExecResult {
   PID: number
 }
 
+export interface WindowsPrivilege {
+  Name: string
+  Description: string
+  Enabled: boolean
+  EnabledByDefault: boolean
+  Removed: boolean
+  UsedForAccess: boolean
+}
+
 export interface PortForward {
   LocalAddr: string
   LocalPort: number
