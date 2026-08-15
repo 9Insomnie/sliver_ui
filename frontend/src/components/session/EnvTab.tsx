@@ -50,7 +50,7 @@ export default function EnvTab({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="card card-flush">
       <div style={{ padding: '14px 16px' }}>
         <div className="env-form">
           <input

@@ -33,20 +33,30 @@ export default function TerminalPage() {
     const fit = new FitAddon()
     term.loadAddon(fit)
     term.open(containerRef.current)
-    fit.fit()
+    const fitTerminal = () => {
+      try {
+        fit.fit()
+      } catch {
+        // container not laid out yet; retry on next frame
+      }
+    }
+    fitTerminal()
     termRef.current = term
     fitRef.current = fit
 
     const ws = new WebSocket(wsUrl(`/ws/sessions/${id}/terminal`))
     ws.binaryType = 'arraybuffer'
     wsRef.current = ws
+    let wsClosed = false
     ws.onopen = () => {
+      if (wsClosed) return
       setConnected(true)
       term.writeln(t('terminal.connectedMsg'))
       sendResize()
     }
     ws.onmessage = (e) => {
-      const frame = decodeFrame(e.data as ArrayBuffer)
+      if (wsClosed) return
+      const frame = decodeFrame(e.data)
       if (!frame) return
       if (frame.type === WS_MSG_DATA) {
         term.write(frame.payload)
@@ -56,21 +66,29 @@ export default function TerminalPage() {
       }
     }
     ws.onclose = () => {
+      if (wsClosed) return
       setConnected(false)
       term.writeln(t('terminal.disconnectedMsg'))
     }
-    ws.onerror = () => term.writeln(t('terminal.errorMsg'))
+    ws.onerror = () => {
+      if (!wsClosed) term.writeln(t('terminal.errorMsg'))
+    }
 
     const onData = (data: string) => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(encodeFrame(WS_MSG_DATA, data))
+      if (!wsClosed && ws.readyState === WebSocket.OPEN)
+        ws.send(encodeFrame(WS_MSG_DATA, data))
     }
     term.onData(onData)
 
     const sendResize = () => {
       if (!fitRef.current || !termRef.current) return
-      fitRef.current.fit()
+      try {
+        fitRef.current.fit()
+      } catch {
+        return
+      }
       const term = termRef.current
-      if (ws.readyState === WebSocket.OPEN) {
+      if (term.cols > 0 && term.rows > 0 && !wsClosed && ws.readyState === WebSocket.OPEN) {
         ws.send(encodeFrame(WS_MSG_RESIZE, JSON.stringify({ cols: term.cols, rows: term.rows })))
       }
     }
@@ -82,6 +100,7 @@ export default function TerminalPage() {
     enter()
 
     return () => {
+      wsClosed = true
       window.removeEventListener('resize', onResize)
       ws.close()
       term.dispose()

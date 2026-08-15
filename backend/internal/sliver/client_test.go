@@ -17,12 +17,19 @@ func writeTestProfile(t *testing.T, dir, name, content string) {
 	}
 }
 
+func isolateHome(t *testing.T) {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("USERPROFILE", t.TempDir())
+}
+
 func TestListProfiles(t *testing.T) {
 	dir := t.TempDir()
 	writeTestProfile(t, dir, "alpha.json", `{}`)
 	writeTestProfile(t, dir, "beta.json", `{}`)
 	writeTestProfile(t, dir, "notes.txt", `not a profile`)
 
+	isolateHome(t)
 	t.Setenv("SLIVER_CLIENT_CONFIGS", dir)
 
 	profiles := ListProfiles()
@@ -44,6 +51,7 @@ func TestListProfiles_DeduplicatesAcrossDirs(t *testing.T) {
 	dir2 := t.TempDir()
 	writeTestProfile(t, dir2, "dup.json", `{}`)
 
+	isolateHome(t)
 	t.Setenv("SLIVER_CLIENT_CONFIGS", dir+string(os.PathListSeparator)+dir2)
 
 	profiles := ListProfiles()
@@ -70,6 +78,7 @@ func TestLoadProfile_Success(t *testing.T) {
 		"private_key": "key"
 	}`
 	writeTestProfile(t, dir, "alice.json", content)
+	isolateHome(t)
 	t.Setenv("SLIVER_CLIENT_CONFIGS", dir)
 
 	cfg, err := LoadProfile("alice")
@@ -89,6 +98,7 @@ func TestLoadProfile_Success(t *testing.T) {
 
 func TestLoadProfile_NotFound(t *testing.T) {
 	dir := t.TempDir()
+	isolateHome(t)
 	t.Setenv("SLIVER_CLIENT_CONFIGS", dir)
 
 	_, err := LoadProfile("missing")
@@ -103,6 +113,7 @@ func TestLoadProfile_NotFound(t *testing.T) {
 func TestLoadProfile_InvalidJSON(t *testing.T) {
 	dir := t.TempDir()
 	writeTestProfile(t, dir, "broken.json", `{not json`)
+	isolateHome(t)
 	t.Setenv("SLIVER_CLIENT_CONFIGS", dir)
 
 	_, err := LoadProfile("broken")

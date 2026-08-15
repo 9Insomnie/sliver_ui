@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ConnectionProvider, useConnection } from './lib/connection'
-import { GROUPED_NAV, FAVORITES_NAV, ICONS } from './lib/nav'
+import { GROUPED_NAV, ICONS } from './lib/nav'
 import DashboardPage from './pages/DashboardPage'
 import SessionsPage from './pages/SessionsPage'
 import SessionDetailPage from './pages/SessionDetailPage'
@@ -30,10 +30,34 @@ import { ToastProvider } from './components/common/Toast'
 import './App.css'
 
 export default function App() {
-  const { connected, version, counts } = useConnection()
+  return (
+    <ToastProvider>
+      <ConnectionProvider>
+        <AppLayout />
+      </ConnectionProvider>
+    </ToastProvider>
+  )
+}
+
+function AppLayout() {
+  const { connected, version, counts, ready } = useConnection()
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+
+  // 侧栏折叠 — 宽屏手动切换,窄屏默认收起;持久化到 localStorage
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('sliverui-sidebar')
+      if (stored !== null) return stored === '1'
+    } catch {
+      /* ignore */
+    }
+    return typeof window !== 'undefined' && window.innerWidth < 900
+  })
+  useEffect(() => {
+    localStorage.setItem('sliverui-sidebar', collapsed ? '1' : '0')
+  }, [collapsed])
 
   const lang = i18n.language === 'zh' ? 'zh' : 'en'
   const toggleLang = () => {
@@ -70,7 +94,8 @@ export default function App() {
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     )
   }, [])
-  const favoriteItems = FAVORITES_NAV.filter((item) => favorites.includes(item.key))
+  const ALL_NAV = GROUPED_NAV.flatMap((section) => section.items)
+  const favoriteItems = ALL_NAV.filter((item) => favorites.includes(item.key))
 
   const badgeFor = (key: string): number | null => {
     switch (key) {
@@ -111,6 +136,7 @@ export default function App() {
         key={item.path + item.key}
         className={`nav-item ${active ? 'active' : ''}`}
         onClick={() => navigate(item.path)}
+        title={t(`nav.${item.key}`)}
       >
         <span className="nav-icon">{item.icon}</span>
         <span className="nav-label">{t(`nav.${item.key}`)}</span>
@@ -140,25 +166,23 @@ export default function App() {
   }
 
   return (
-    <ToastProvider>
-      <ConnectionProvider>
-        <div className="app">
-        <aside className="sidebar">
-        <div className="logo">
-          <span className="logo-mark">
-            <Logo size={18} />
-          </span>
-          <span className="logo-text">{t('app.title')}</span>
-          <span className="logo-caret">{ICONS.caret}</span>
-        </div>
+    <div className={`app ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      <aside className="sidebar">
+      <div className="logo">
+        <span className="logo-mark">
+          <Logo size={18} />
+        </span>
+        <span className="logo-text">{t('app.title')}</span>
+        <span className="logo-caret">{ICONS.caret}</span>
+      </div>
 
-        <nav>
-          {GROUPED_NAV.map((section) => (
-            <div className="nav-section" key={section.key}>
-              <div className="nav-section-title">{t(`nav.group.${section.key}`)}</div>
-              {section.items.map(renderNavItem)}
-            </div>
-          ))}
+      <nav>
+        {GROUPED_NAV.map((section) => (
+          <div className="nav-section" key={section.key}>
+            <div className="nav-section-title">{t(`nav.group.${section.key}`)}</div>
+            {section.items.map(renderNavItem)}
+          </div>
+        ))}
 
           <div className="nav-section">
             <div className="nav-section-title">
@@ -177,35 +201,50 @@ export default function App() {
           <div className="conn-status">
             <span className={`dot ${connected ? 'ok' : 'bad'}`} />
             <span>
-              {connected
-                ? t('app.connected', { version })
-                : t('app.notConnected')}
+              {!ready
+                ? t('app.connecting')
+                : connected
+                  ? t('app.connected', { version })
+                  : t('app.notConnected')}
             </span>
           </div>
           <button className="lang-switch" onClick={toggleLang} title={t('app.language')}>
             {ICONS.globe}
-            {lang === 'zh' ? 'EN' : '中'}
+            <span>{lang === 'zh' ? 'EN' : '中'}</span>
           </button>
         </div>
       </aside>
       <div className="main">
         <header className="topbar">
-          <div className="topbar-breadcrumb">
-            <span className="topbar-ws">{t('app.workspace')}</span>
-            <span className="topbar-sep">/</span>
-            <span className="topbar-page">{t('app.title')}</span>
+          <div className="topbar-left">
+            <button
+              className="btn icon sidebar-toggle"
+              onClick={() => setCollapsed((c) => !c)}
+              title={collapsed ? t('app.expand') : t('app.collapse')}
+            >
+              {ICONS.menu}
+            </button>
+            <div className="topbar-breadcrumb">
+              <span className="topbar-ws">{t('app.workspace')}</span>
+              <span className="topbar-sep">/</span>
+              <span className="topbar-page">{t('app.title')}</span>
+            </div>
           </div>
           <div className="topbar-right">
-            <div className={`server-status ${connected ? 'ok' : 'bad'}`}>
+            <div className={`server-status ${ready ? (connected ? 'ok' : 'bad') : ''}`}>
               <span className={`dot ${connected ? 'ok' : 'bad'}`} />
               <span className="server-status-text">
-                {connected ? t('status.connected') : t('status.disconnected')}
+                {!ready
+                  ? t('status.connecting')
+                  : connected
+                    ? t('status.connected')
+                    : t('status.disconnected')}
               </span>
             </div>
           </div>
         </header>
         <main className="content">
-          {!connected && (
+          {ready && !connected && (
             <div className="offline-banner">
               <span className="dot bad" />
               <span>{t('app.offline')}</span>
@@ -239,7 +278,5 @@ export default function App() {
         </main>
       </div>
       </div>
-      </ConnectionProvider>
-    </ToastProvider>
   )
 }

@@ -36,7 +36,7 @@ export default function NetworkTab({ sessionId }: { sessionId: string }) {
         <div className="empty">{t('common.loading')}</div>
       ) : (
         <>
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card card-flush">
             <div style={{ padding: '12px 16px' }}>
               <div className="card-title" style={{ marginBottom: 0 }}>
                 {t('network.interfaces')}
@@ -66,7 +66,7 @@ export default function NetworkTab({ sessionId }: { sessionId: string }) {
             )}
           </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card card-flush">
             <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="card-title" style={{ marginBottom: 0 }}>
                 {t('network.connections')}

@@ -319,7 +319,7 @@ func (c *Client) RunAlias(sessionID, name, args, process, arch, method, class st
 		}
 		resp, err := c.RPC.ExecuteAssembly(ctx, &sliverpb.ExecuteAssemblyReq{
 			Assembly:  binData,
-			Arguments: extArgs,
+			Arguments: []string{extArgs},
 			Process:   process,
 			IsDLL:     isDLL,
 			Arch:      arch,
@@ -337,7 +337,7 @@ func (c *Client) RunAlias(sessionID, name, args, process, arch, method, class st
 	} else if manifest.IsReflective {
 		resp, err := c.RPC.SpawnDll(ctx, &sliverpb.InvokeSpawnDllReq{
 			Data:        binData,
-			Args:        strings.TrimSpace(extArgs),
+			Args:        []string{strings.TrimSpace(extArgs)},
 			ProcessName: process,
 			EntryPoint:  manifest.Entrypoint,
 			Kill:        true,
@@ -353,7 +353,7 @@ func (c *Client) RunAlias(sessionID, name, args, process, arch, method, class st
 	} else {
 		resp, err := c.RPC.Sideload(ctx, &sliverpb.SideloadReq{
 			Data:        binData,
-			Args:        extArgs,
+			Args:        []string{extArgs},
 			EntryPoint:  manifest.Entrypoint,
 			ProcessName: process,
 			IsDLL:       isDLL,

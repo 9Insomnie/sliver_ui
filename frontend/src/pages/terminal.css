@@ -19,3 +19,18 @@
 .terminal-container .xterm {
   height: 100%;
 }
+
+@media (max-width: 1100px) {
+  .page-terminal {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-terminal {
+    padding: 10px 10px;
+  }
+  .terminal-container {
+    min-height: 220px;
+  }
+}

@@ -94,7 +94,7 @@ export interface ImplantConfig {
 
 export interface ImplantBuild {
   Name: string
-  ImplantConfig: ImplantConfig
+  ImplantConfig: ImplantConfigView
   ImplantBuildID: string
   Arch: string
   OS: string

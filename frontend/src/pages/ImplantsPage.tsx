@@ -445,7 +445,7 @@ export default function ImplantsPage() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card card-flush">
         <table className="data">
           <thead>
             <tr>
@@ -467,21 +467,21 @@ export default function ImplantsPage() {
               </tr>
             )}
             {builds.map((b) => (
-              <tr key={b.ImplantBuildID}>
+              <tr key={b.Name}>
                 <td className="mono">{b.Name}</td>
                 <td>
                   <span className="badge blue">
                     {b.OS}/{b.Arch}
                   </span>
                 </td>
-                <td>{b.ImplantConfig?.format || b.ImplantConfig?.target || '-'}</td>
+                <td>{b.ImplantConfig?.Format || '-'}</td>
                 <td className="mono">
-                  {b.ImplantConfig?.c2?.map((c) => `${c.protocol}://${c.address}`).join(', ') || '-'}
+                  {b.ImplantConfig?.C2?.map((c) => c.URL).join(', ') || '-'}
                 </td>
                 <td className="mono">
-                  {b.ImplantConfig?.interval}s / {b.ImplantConfig?.jitter}%
+                  {b.ImplantConfig?.Interval}s / {b.ImplantConfig?.Jitter}%
                 </td>
-                <td>{b.ImplantConfig?.obfuscate ? t('common.yes') : t('common.no')}</td>
+                <td>{b.ImplantConfig?.Obfuscate ? t('common.yes') : t('common.no')}</td>
                 <td>
                   <div className="fs-actions">
                     <button className="btn sm" onClick={() => downloadBuild(b)}>

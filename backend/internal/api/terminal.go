@@ -44,6 +44,9 @@ func (s *Server) handleTerminalWS(w http.ResponseWriter, r *http.Request) {
 	id := rest
 
 	websocket.Server{Handler: func(ws *websocket.Conn) {
+		// x/net/websocket defaults to text frames; the frontend reads raw
+		// binary frames (ArrayBuffer), so force binary on both directions.
+		ws.PayloadType = websocket.BinaryFrame
 		s.runTerminal(ws, c, id)
 	}}.ServeHTTP(w, r)
 }
@@ -60,10 +63,16 @@ func (s *Server) runTerminal(ws *websocket.Conn, c *sliver.Client, sessionID str
 
 	// Only enable PTY for unix-like sessions.
 	enablePTY := false
+	windowsSession := false
 	if sessions, err := c.Sessions(); err == nil {
 		for _, s := range sessions {
-			if s.ID == sessionID && (s.OS == "linux" || s.OS == "darwin") {
-				enablePTY = true
+			if s.ID == sessionID {
+				if s.OS == "linux" || s.OS == "darwin" {
+					enablePTY = true
+				}
+				if s.OS == "windows" {
+					windowsSession = true
+				}
 				break
 			}
 		}
@@ -116,10 +125,42 @@ func (s *Server) runTerminal(ws *websocket.Conn, c *sliver.Client, sessionID str
 			_ = json.Unmarshal(payload, &dims)
 		case wsMsgData:
 			if len(payload) > 0 {
+				if windowsSession {
+					payload = normalizeCRLF(payload)
+				}
 				_, _ = tunnel.Write(payload)
 			}
 		}
 	}
+}
+
+// normalizeCRLF rewrites bare CR (carriage return) bytes into CRLF. Windows
+// pipes shells (powershell.exe/cmd.exe) run without a console, so a lone \r
+// only moves the cursor back to column 0 instead of starting a new line.
+// Existing CRLF sequences are left untouched.
+func normalizeCRLF(b []byte) []byte {
+	cr := false
+	for i := 0; i < len(b); i++ {
+		if b[i] == '\r' {
+			cr = true
+			break
+		}
+	}
+	if !cr {
+		return b
+	}
+	out := make([]byte, 0, len(b)+8)
+	for i := 0; i < len(b); i++ {
+		if b[i] == '\r' {
+			out = append(out, '\r')
+			if i+1 >= len(b) || b[i+1] != '\n' {
+				out = append(out, '\n')
+			}
+		} else {
+			out = append(out, b[i])
+		}
+	}
+	return out
 }
 
 // writeWS frames a WebSocket message: [type][4-byte BE length][payload].

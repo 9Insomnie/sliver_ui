@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -72,20 +71,20 @@ func (c *Client) profileBinary(profileName string) ([]byte, error) {
 		return nil, fmt.Errorf("no profile found for name %s", profileName)
 	}
 
-	implantName := strings.TrimSuffix(cfg.GetName(), filepath.Ext(cfg.GetName()))
+	implantName := profileName
 
 	builds, err := c.RPC.ImplantBuilds(ctx, &commonpb.Empty{})
 	if err != nil {
 		return nil, err
 	}
 	if _, ok := builds.GetConfigs()[implantName]; ok {
-		resp, err := c.RPC.Regenerate(ctx, &clientpb.RegenerateReq{ImplantName: cfg.GetName()})
+		resp, err := c.RPC.Regenerate(ctx, &clientpb.RegenerateReq{ImplantName: implantName})
 		if err != nil {
 			return nil, err
 		}
 		return resp.GetFile().GetData(), nil
 	}
-	resp, err := c.RPC.Generate(ctx, &clientpb.GenerateReq{Config: cfg})
+	resp, err := c.RPC.Generate(ctx, &clientpb.GenerateReq{Config: cfg, Name: implantName})
 	if err != nil {
 		return nil, err
 	}

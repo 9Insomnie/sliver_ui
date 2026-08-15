@@ -150,7 +150,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
         <div className="empty">{t('common.loading')}</div>
       ) : (
         <div className="reg-cols">
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card card-flush">
             <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-dim)' }}>
               {t('registry.subkeys')} / {t('registry.values')}
             </div>
@@ -187,7 +187,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
             )}
           </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card card-flush">
             <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-dim)' }}>
               {t('registry.value')}
             </div>

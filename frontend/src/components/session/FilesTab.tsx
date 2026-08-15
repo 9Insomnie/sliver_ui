@@ -163,7 +163,7 @@ export default function FilesTab({
   }
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="card card-flush">
       <div style={{ padding: '14px 16px' }}>
         <div className="fs-toolbar">
           <button className="btn sm" onClick={up} disabled={!path || path === '/'}>

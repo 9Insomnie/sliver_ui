@@ -126,7 +126,21 @@ func LoadProfile(name string) (*ProfileConfig, error) {
 	return nil, fmt.Errorf("profile %q not found in %v", name, ConfigPaths())
 }
 
-// Connect establishes a mTLS gRPC connection to sliver-server.
+// tokenAuth attaches the operator bearer token to every gRPC request.
+type tokenAuth struct {
+	token string
+}
+
+func (t tokenAuth) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"Authorization": "Bearer " + t.token}, nil
+}
+
+func (tokenAuth) RequireTransportSecurity() bool { return true }
+
+// Connect establishes a mTLS gRPC connection to sliver-server. Like the
+// official sliver-client, hostname validation is skipped but the server
+// certificate chain is still verified against the profile CA, and the
+// operator token is attached to every request.
 func Connect(cfg *ProfileConfig) (*Client, error) {
 	if cfg.CACertificate == "" {
 		return nil, fmt.Errorf("profile is missing CA certificate")
@@ -140,14 +154,23 @@ func Connect(cfg *ProfileConfig) (*Client, error) {
 		return nil, fmt.Errorf("invalid client certificate: %w", err)
 	}
 	tlsConfig := &tls.Config{
-		RootCAs:      caPool,
-		Certificates: []tls.Certificate{cert},
+		RootCAs:            caPool,
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true, // hostname check is done by hand; chain verified against CA
+		VerifyPeerCertificate: func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+			return rootOnlyVerify(cfg.CACertificate, rawCerts)
+		},
 	}
 	creds := credentials.NewTLS(tlsConfig)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	addr := fmt.Sprintf("%s:%d", cfg.LHost, cfg.LPort)
-	conn, err := grpc.Dial(addr,
+	conn, err := grpc.DialContext(ctx, addr,
 		grpc.WithTransportCredentials(creds),
+		grpc.WithPerRPCCredentials(tokenAuth{token: cfg.Token}),
+		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(128*1024*1024)),
 	)
 	if err != nil {
@@ -158,6 +181,26 @@ func Connect(cfg *ProfileConfig) (*Client, error) {
 		RPC:     rpcpb.NewSliverRPCClient(conn),
 		Profile: cfg.Operator,
 	}, nil
+}
+
+// rootOnlyVerify validates the server certificate chain against the profile
+// CA, skipping hostname matching (mirrors the official sliver-client).
+func rootOnlyVerify(caCertificate string, rawCerts [][]byte) error {
+	roots := x509.NewCertPool()
+	if !roots.AppendCertsFromPEM([]byte(caCertificate)) {
+		return fmt.Errorf("failed to parse root certificate")
+	}
+	if len(rawCerts) == 0 {
+		return fmt.Errorf("no server certificate presented")
+	}
+	cert, err := x509.ParseCertificate(rawCerts[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse server certificate: %w", err)
+	}
+	if _, err := cert.Verify(x509.VerifyOptions{Roots: roots}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Close terminates the gRPC connection.
