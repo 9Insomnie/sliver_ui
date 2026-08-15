@@ -311,13 +311,11 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"counts": out})
 }
 
+// connectRequest carries the raw sliver-client profile config loaded from a
+// file by the UI. Connection now depends entirely on this config file rather
+// than manually supplied connection parameters.
 type connectRequest struct {
-	Name   string `json:"name"`
-	LHost  string `json:"lhost"`
-	LPort  int    `json:"lport"`
-	CA     string `json:"ca"`
-	Cert   string `json:"cert"`
-	Key    string `json:"key"`
+	Content string `json:"content"`
 }
 
 func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
@@ -326,16 +324,14 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	cfg, err := sliver.LoadProfile(req.Name)
+	if req.Content == "" {
+		writeErr(w, http.StatusBadRequest, "missing config file content")
+		return
+	}
+	cfg, err := sliver.ParseProfile([]byte(req.Content))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
-	}
-	if req.LHost != "" {
-		cfg.LHost = req.LHost
-	}
-	if req.LPort != 0 {
-		cfg.LPort = req.LPort
 	}
 	client, err := sliver.Connect(cfg)
 	if err != nil {

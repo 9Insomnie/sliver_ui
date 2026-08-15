@@ -233,7 +233,7 @@ export default function ImplantsPage() {
           <div className="page-sub">{t('implants.sub', { count: builds.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -245,7 +245,7 @@ export default function ImplantsPage() {
           style={{
             borderColor: 'var(--green)',
             color: 'var(--green)',
-            background: 'rgba(63,213,143,0.08)',
+            background: 'var(--success-bg)',
           }}
         >
           {message}
@@ -269,12 +269,12 @@ export default function ImplantsPage() {
 
       {builds.length > 0 && (
         <div className="dash-stats build-summary">
-          <button className="dash-stat" onClick={() => {}}>
+          <button type="button" className="dash-stat" onClick={() => {}}>
             <div className="dash-stat-value mono">{builds.length}</div>
             <div className="dash-stat-label">{t('implants.totalBuilds')}</div>
           </button>
           {osSummary.map(([osName, count]) => (
-            <button key={osName} className="dash-stat" onClick={() => {}}>
+            <button type="button" key={osName} className="dash-stat" onClick={() => {}}>
               <div className="dash-stat-value mono">{count}</div>
               <div className="dash-stat-label">{osName}</div>
             </button>
@@ -369,7 +369,7 @@ export default function ImplantsPage() {
             </label>
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={generate} disabled={generating}>
+            <button type="button" className="btn primary" onClick={generate} disabled={generating}>
               {generating ? t('implants.generating') : t('implants.generate')}
             </button>
           </div>
@@ -383,16 +383,16 @@ export default function ImplantsPage() {
             onChange={(e) => setProfileName(e.target.value)}
             style={{
               padding: '6px 10px',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius)',
               border: '1px solid var(--border-strong)',
-              background: 'rgba(255,255,255,0.03)',
+              background: 'var(--surface-soft)',
               color: 'var(--text)',
-              fontSize: 13,
+              fontSize: 'var(--fs-base)',
               flex: 1,
               maxWidth: 320,
             }}
           />
-          <button className="btn" onClick={saveProfile} disabled={!profileName}>
+          <button type="button" className="btn" onClick={saveProfile} disabled={!profileName}>
             {t('profiles.saveAs')}
           </button>
         </div>
@@ -430,10 +430,10 @@ export default function ImplantsPage() {
                   </td>
                   <td>
                     <div className="fs-actions">
-                      <button className="btn sm" onClick={() => loadProfile(p)}>
+                      <button type="button" className="btn sm" onClick={() => loadProfile(p)}>
                         {t('profiles.load')}
                       </button>
-                      <button className="btn sm danger" onClick={() => setDeleting({ kind: 'profile', name: p.Name })}>
+                      <button type="button" className="btn sm danger" onClick={() => setDeleting({ kind: 'profile', name: p.Name })}>
                         {t('profiles.delete')}
                       </button>
                     </div>
@@ -484,13 +484,13 @@ export default function ImplantsPage() {
                 <td>{b.ImplantConfig?.Obfuscate ? t('common.yes') : t('common.no')}</td>
                 <td>
                   <div className="fs-actions">
-                    <button className="btn sm" onClick={() => downloadBuild(b)}>
+                    <button type="button" className="btn sm" onClick={() => downloadBuild(b)}>
                       {t('implants.download')}
                     </button>
-                    <button className="btn sm" onClick={() => regenerateBuild(b)}>
+                    <button type="button" className="btn sm" onClick={() => regenerateBuild(b)}>
                       {t('implants.regenerate')}
                     </button>
-                    <button className="btn sm danger" onClick={() => setDeleting({ kind: 'build', name: b.Name })}>
+                    <button type="button" className="btn sm danger" onClick={() => setDeleting({ kind: 'build', name: b.Name })}>
                       {t('profiles.delete')}
                     </button>
                   </div>

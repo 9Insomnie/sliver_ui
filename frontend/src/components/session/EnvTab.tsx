@@ -66,10 +66,10 @@ export default function EnvTab({ sessionId }: { sessionId: string }) {
             onChange={(e) => setValue(e.target.value)}
             style={{ flex: 1, minWidth: 200 }}
           />
-          <button className="btn sm primary" onClick={set} disabled={!key}>
+          <button type="button" className="btn sm primary" onClick={set} disabled={!key}>
             {t('env.set')}
           </button>
-          <button className="btn sm" onClick={load}>
+          <button type="button" className="btn sm" onClick={load}>
             {t('env.refresh')}
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function EnvTab({ sessionId }: { sessionId: string }) {
                 <td className="mono">{v.Key}</td>
                 <td className="mono">{v.Value}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => unset(v.Key)}>
+                  <button type="button" className="btn sm danger" onClick={() => unset(v.Key)}>
                     {t('env.unset')}
                   </button>
                 </td>

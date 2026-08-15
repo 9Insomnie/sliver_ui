@@ -240,15 +240,15 @@ export default function LootPage() {
         <div className="toolbar">
           <div className="seg">
             {(['all', 'FILE', 'CREDENTIAL'] as const).map((f) => (
-              <button key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
+              <button type="button" key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
                 {f === 'all' ? t('loot.filterAll') : f === 'FILE' ? t('loot.filterFiles') : t('loot.filterCreds')}
               </button>
             ))}
           </div>
-          <button className="btn primary" onClick={() => setAddOpen(true)}>
+          <button type="button" className="btn primary" onClick={() => setAddOpen(true)}>
             {t('loot.add')}
           </button>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -281,11 +281,11 @@ export default function LootPage() {
           selected && (
             <div className="drawer-actions">
               {selected.LootType.includes('FILE') && (
-                <button className="btn" onClick={() => download(selected)}>
+                <button type="button" className="btn" onClick={() => download(selected)}>
                   {t('loot.download')}
                 </button>
               )}
-              <button className="btn danger" onClick={() => setRemoving(selected)}>
+              <button type="button" className="btn danger" onClick={() => setRemoving(selected)}>
                 {t('loot.remove')}
               </button>
             </div>
@@ -300,10 +300,10 @@ export default function LootPage() {
               {renaming ? (
                 <div className="drawer-rename">
                   <input className="input" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
-                  <button className="btn sm primary" onClick={renameLoot} disabled={!renameValue.trim()}>
+                  <button type="button" className="btn sm primary" onClick={renameLoot} disabled={!renameValue.trim()}>
                     {t('common.save')}
                   </button>
-                  <button
+                  <button type="button"
                     className="btn sm"
                     onClick={() => {
                       setRenaming(false)
@@ -316,7 +316,7 @@ export default function LootPage() {
               ) : (
                 <div className="drawer-rename">
                   <span className="dvalue">{selected.Name}</span>
-                  <button className="btn sm" onClick={() => setRenaming(true)}>
+                  <button type="button" className="btn sm" onClick={() => setRenaming(true)}>
                     {t('loot.rename')}
                   </button>
                 </div>
@@ -347,7 +347,7 @@ export default function LootPage() {
                   <span className="dlabel">{t('loot.credUser')}</span>
                   <div className="drawer-copy">
                     <span className="dvalue mono">{(fullEntry || selected).CredUser || '—'}</span>
-                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredUser || '', t('loot.credUser'))}>
+                    <button type="button" className="btn sm" onClick={() => copyText((fullEntry || selected).CredUser || '', t('loot.credUser'))}>
                       {t('loot.copy')}
                     </button>
                   </div>
@@ -356,7 +356,7 @@ export default function LootPage() {
                   <span className="dlabel">{t('loot.credPassword')}</span>
                   <div className="drawer-copy">
                     <span className="dvalue mono">{(fullEntry || selected).CredPassword || '—'}</span>
-                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredPassword || '', t('loot.credPassword'))}>
+                    <button type="button" className="btn sm" onClick={() => copyText((fullEntry || selected).CredPassword || '', t('loot.credPassword'))}>
                       {t('loot.copy')}
                     </button>
                   </div>
@@ -365,7 +365,7 @@ export default function LootPage() {
                   <span className="dlabel">{t('loot.credApiKey')}</span>
                   <div className="drawer-copy">
                     <span className="dvalue mono">{(fullEntry || selected).CredAPIKey || '—'}</span>
-                    <button className="btn sm" onClick={() => copyText((fullEntry || selected).CredAPIKey || '', t('loot.credApiKey'))}>
+                    <button type="button" className="btn sm" onClick={() => copyText((fullEntry || selected).CredAPIKey || '', t('loot.credApiKey'))}>
                       {t('loot.copy')}
                     </button>
                   </div>
@@ -388,10 +388,10 @@ export default function LootPage() {
         onClose={() => setAddOpen(false)}
         footer={
           <div className="drawer-actions">
-            <button className="btn" onClick={() => setAddOpen(false)}>
+            <button type="button" className="btn" onClick={() => setAddOpen(false)}>
               {t('common.cancel')}
             </button>
-            <button className="btn primary" disabled={addBusy} onClick={addLoot}>
+            <button type="button" className="btn primary" disabled={addBusy} onClick={addLoot}>
               {t('loot.add')}
             </button>
           </div>
@@ -400,10 +400,10 @@ export default function LootPage() {
         <div className="drawer-detail">
           <div className="drawer-section">{t('loot.addType')}</div>
           <div className="seg" style={{ alignSelf: 'flex-start' }}>
-            <button className={addType === 'file' ? 'active' : ''} onClick={() => setAddType('file')}>
+            <button type="button" className={addType === 'file' ? 'active' : ''} onClick={() => setAddType('file')}>
               {t('loot.filterFiles')}
             </button>
-            <button className={addType === 'credential' ? 'active' : ''} onClick={() => setAddType('credential')}>
+            <button type="button" className={addType === 'credential' ? 'active' : ''} onClick={() => setAddType('credential')}>
               {t('loot.filterCreds')}
             </button>
           </div>
@@ -419,10 +419,10 @@ export default function LootPage() {
           ) : (
             <>
               <div className="seg" style={{ alignSelf: 'flex-start' }}>
-                <button className={addCredType === 'up' ? 'active' : ''} onClick={() => setAddCredType('up')}>
+                <button type="button" className={addCredType === 'up' ? 'active' : ''} onClick={() => setAddCredType('up')}>
                   {t('loot.credUp')}
                 </button>
-                <button className={addCredType === 'apikey' ? 'active' : ''} onClick={() => setAddCredType('apikey')}>
+                <button type="button" className={addCredType === 'apikey' ? 'active' : ''} onClick={() => setAddCredType('apikey')}>
                   {t('loot.credApiKey')}
                 </button>
               </div>

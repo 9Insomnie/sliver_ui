@@ -194,7 +194,7 @@ export default function BeaconDetailPage() {
               </div>
             </div>
             <div className="toolbar">
-              <button className="btn" onClick={() => navigate('/beacons')}>
+              <button type="button" className="btn" onClick={() => navigate('/beacons')}>
                 {t('detail.back')}
               </button>
             </div>
@@ -266,10 +266,10 @@ export default function BeaconDetailPage() {
                 </div>
               </div>
               <div className="side-actions">
-                <button className="btn" onClick={openSession} disabled={opening}>
+                <button type="button" className="btn" onClick={openSession} disabled={opening}>
                   {opening ? t('common.loading') : t('beacons.openSession')}
                 </button>
-                <button className="btn danger" onClick={() => setRemoving(true)}>
+                <button type="button" className="btn danger" onClick={() => setRemoving(true)}>
                   {t('beacons.remove')}
                 </button>
               </div>

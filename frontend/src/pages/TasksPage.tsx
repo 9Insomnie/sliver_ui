@@ -131,7 +131,7 @@ export default function TasksPage() {
           <div className="page-sub">{t('tasks.sub', { count: rows.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>

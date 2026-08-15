@@ -51,13 +51,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ push }}>
       {children}
       <div className="toast-region" role="status" aria-live="polite">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.tone}`} onClick={() => remove(t.id)}>
-            <span className="toast-dot" />
-            <span className="toast-message">{t.message}</span>
-            <span className="toast-close">×</span>
-          </div>
-        ))}
+          {toasts.map((toast) => (
+            <div key={toast.id} className={`toast toast-${toast.tone}`} onClick={() => remove(toast.id)}>
+              <span className="toast-dot" />
+              <span className="toast-message">{toast.message}</span>
+              <button
+                type="button"
+                className="toast-close"
+                aria-label="Close notification"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  remove(toast.id)
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
       </div>
     </ToastContext.Provider>
   )

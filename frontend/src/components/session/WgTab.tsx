@@ -110,7 +110,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
     <div className="card">
       <div className="card-header">
         <div className="card-title">{t('wg.title')}</div>
-        <button className="btn" onClick={generateConfig} disabled={configBusy}>
+        <button type="button" className="btn" onClick={generateConfig} disabled={configBusy}>
           {configBusy ? t('common.working') : t('wg.generateConfig')}
         </button>
       </div>
@@ -133,7 +133,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
             <input value={remoteAddr} onChange={(e) => setRemoteAddr(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={addForwarder}>
+            <button type="button" className="btn primary" onClick={addForwarder}>
               {t('wg.addForwarder')}
             </button>
           </div>
@@ -161,7 +161,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
                 <td className="mono">{f.LocalAddr || '—'}</td>
                 <td className="mono">{f.RemoteAddr || '—'}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => stopForwarder(f.ID)}>
+                  <button type="button" className="btn sm danger" onClick={() => stopForwarder(f.ID)}>
                     {t('wg.stop')}
                   </button>
                 </td>
@@ -181,7 +181,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
             <input type="number" value={socksPort} onChange={(e) => setSocksPort(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={addSocks}>
+            <button type="button" className="btn primary" onClick={addSocks}>
               {t('wg.addSocks')}
             </button>
           </div>
@@ -207,7 +207,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
                 <td className="mono">{s.ID}</td>
                 <td className="mono">{s.LocalAddr || '—'}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => stopSocks(s.ID)}>
+                  <button type="button" className="btn sm danger" onClick={() => stopSocks(s.ID)}>
                     {t('wg.stop')}
                   </button>
                 </td>
@@ -224,7 +224,7 @@ export default function WgTab({ sessionId, isWg }: { sessionId: string; isWg: bo
         onClose={() => setShowConfig(false)}
         footer={
           <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn" onClick={downloadConfig}>
+            <button type="button" className="btn" onClick={downloadConfig}>
               {t('wg.download')}
             </button>
           </div>

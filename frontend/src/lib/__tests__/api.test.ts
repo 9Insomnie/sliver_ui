@@ -46,12 +46,13 @@ describe('api client', () => {
     await expect(api.sessions()).rejects.toThrow('boom')
   })
 
-  it('connect() POSTs config as JSON', async () => {
+  it('connect() POSTs config content as JSON', async () => {
     const fn = mockFetch(200, { success: true })
-    await api.connect({ name: 'local', lhost: '127.0.0.1', lport: 31337 })
+    const content = JSON.stringify({ operator: 'local', lhost: '127.0.0.1', lport: 31337 })
+    await api.connect({ content })
     const [, opts] = fn.mock.calls[0]
     expect(opts.method).toBe('POST')
-    expect(JSON.parse(opts.body)).toMatchObject({ name: 'local', lport: 31337 })
+    expect(JSON.parse(opts.body)).toMatchObject({ content })
   })
 
   it('stopListener() sends DELETE', async () => {

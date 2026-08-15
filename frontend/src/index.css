@@ -6,11 +6,13 @@
   --bg-sidebar: #0a0a0b;
   --bg-panel: #131316;
   --bg-panel-solid: #131316;
-  --bg-elevated: #1a1a1d;
   --bg-pop: #1c1c20;
   --bg-hover: rgba(255, 255, 255, 0.045);
   --bg-active: rgba(255, 255, 255, 0.075);
   --bg-selected: rgba(124, 92, 225, 0.10);
+  --surface-soft: rgba(255, 255, 255, 0.03);
+  /* 代码块深底(原 --bg-deep 未定义,这里补全,供 .run-output / .prune-control input 使用) */
+  --bg-deep: #060607;
 
   /* ── Borders (克制) ──────────────────────────────────────────── */
   --border: rgba(255, 255, 255, 0.07);
@@ -20,26 +22,25 @@
   /* ── Text (略带暖意,与背景协调) ──────────────────────────────── */
   --text: #ededee;
   --text-dim: #929299;
-  --text-mute: #63636b;
-  --text-tertiary: #4d4d54;
+  /* 提亮以满足 WCAG AA：--text-mute 用于占位符/副标题/导航(正文,需 4.5:1)；
+     --text-tertiary 仅用于面包屑分隔符(UI 组件,适用 3:1),保留“分隔符<页面名”的层级 */
+  --text-mute: #7c7c84;
+  --text-tertiary: #65656d;
 
   /* ── Brand accent (单色紫,Linear 风格) ────────────────────────
      原方案是 indigo → violet 渐变,这次压成单个 purple,
      渐变仅用在 logo / 主操作按钮,且角度更平。 */
   --accent: #7c5cff;
   --accent-bright: #a78bfa;
-  --accent-dim: rgba(124, 92, 225, 0.14);
-  --accent-glow: rgba(124, 92, 225, 0.20);
   --accent-grad: linear-gradient(135deg, #7c5cff 0%, #b794f5 100%);
 
   /* ── Status (Linear 风:稍降饱和,提亮) ───────────────────────── */
   --green: #4cb782;
   --red: #e5484d;
   --yellow: #f5b62e;
-  --cyan: #4ec5b1;
-  --blue: #6188ff;
   --orange: #f76808;
   --green-bg: rgba(76, 183, 130, 0.14);
+  --success-bg: rgba(63, 213, 143, 0.08);
   --red-bg: rgba(229, 72, 77, 0.14);
   --yellow-bg: rgba(245, 182, 46, 0.14);
   --blue-bg: rgba(124, 92, 225, 0.16);
@@ -54,7 +55,6 @@
   /* ── Radii ─────────────────────────────────────────────────────
      Linear 的圆角偏小(6-8),项目内最大为卡片 8px。 */
   --radius: 6px;
-  --radius-sm: 4px;
   --radius-lg: 10px;
 
   /* ── Type scale ──────────────────────────────────────────────── */
@@ -65,7 +65,6 @@
   --fs-md: 14px;
   --fs-lg: 16px;
   --fs-xl: 20px;
-  --lh-tight: 1.35;
   --lh-base: 1.5;
 
   /* Motion ─ 统一曲线与时长,避免 0.1s/0.12s 混用 */

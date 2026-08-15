@@ -310,14 +310,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input value={reconSec} onChange={(e) => setReconSec(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn" onClick={reconfigure} disabled={reconfiguring}>
+            <button type="button" className="btn" onClick={reconfigure} disabled={reconfiguring}>
               {reconfiguring ? t('common.loading') : t('advanced.reconApply')}
             </button>
           </div>
         </div>
         {reconError && <div className="error-banner">{reconError}</div>}
         {reconMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {reconMsg}
           </div>
         )}
@@ -352,7 +352,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           </div>
         )}
         <div className="field" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn primary" onClick={run} disabled={!file || running}>
+          <button type="button" className="btn primary" onClick={run} disabled={!file || running}>
             {running ? t('common.loading') : t('advanced.run')}
           </button>
         </div>
@@ -405,14 +405,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             </div>
           )}
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runMsf} disabled={msfRunning || !msfPayload || !msfLhost}>
+            <button type="button" className="btn primary" onClick={runMsf} disabled={msfRunning || !msfPayload || !msfLhost}>
               {msfRunning ? t('common.loading') : t('advanced.msfRun')}
             </button>
           </div>
         </div>
         {msfError && <div className="error-banner">{msfError}</div>}
         {msfMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {msfMsg}
           </div>
         )}
@@ -449,7 +449,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input value={stagePort} onChange={(e) => setStagePort(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={generateStage} disabled={stageRunning || !stageHost}>
+            <button type="button" className="btn primary" onClick={generateStage} disabled={stageRunning || !stageHost}>
               {stageRunning ? t('common.loading') : t('advanced.stagerGenerate')}
             </button>
           </div>
@@ -459,7 +459,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           <div className="toolbar">
             <span className="mono">{stager.FileName}</span>
             <span className="mono">{stager.Size} bytes</span>
-            <button className="btn sm" onClick={downloadStage}>
+            <button type="button" className="btn sm" onClick={downloadStage}>
               {t('advanced.stagerDownload')}
             </button>
           </div>
@@ -478,14 +478,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input value={bdProfile} onChange={(e) => setBdProfile(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runBackdoor} disabled={bdRunning || !bdPath || !bdProfile}>
+            <button type="button" className="btn primary" onClick={runBackdoor} disabled={bdRunning || !bdPath || !bdProfile}>
               {bdRunning ? t('common.loading') : t('advanced.backdoorRun')}
             </button>
           </div>
         </div>
         {bdError && <div className="error-banner">{bdError}</div>}
         {bdMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {bdMsg}
           </div>
         )}
@@ -515,14 +515,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input type="file" onChange={(e) => setHjTargetFile(e.target.files?.[0] || null)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runHijackDll} disabled={hjRunning || !hjTarget}>
+            <button type="button" className="btn primary" onClick={runHijackDll} disabled={hjRunning || !hjTarget}>
               {hjRunning ? t('common.loading') : t('advanced.hijackRun')}
             </button>
           </div>
         </div>
         {hjError && <div className="error-banner">{hjError}</div>}
         {hjMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {hjMsg}
           </div>
         )}
@@ -544,7 +544,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input value={rdiArgs} onChange={(e) => setRdiArgs(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={convertRdi} disabled={rdiRunning || !rdiFile}>
+            <button type="button" className="btn primary" onClick={convertRdi} disabled={rdiRunning || !rdiFile}>
               {rdiRunning ? t('common.loading') : t('advanced.rdiConvert')}
             </button>
           </div>
@@ -554,7 +554,7 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
           <div className="toolbar">
             <span className="mono">rdi.bin</span>
             <span className="mono">{rdiShellcode.Size} bytes</span>
-            <button className="btn sm" onClick={downloadRdi}>
+            <button type="button" className="btn sm" onClick={downloadRdi}>
               {t('advanced.rdiDownload')}
             </button>
           </div>
@@ -577,14 +577,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
               <input type="checkbox" checked={scRwx} onChange={(e) => setScRwx(e.target.checked)} />
               {t('advanced.shellcodeRwx')}
             </label>
-            <button className="btn primary" onClick={runShellcode} disabled={scRunning || !scFile}>
+            <button type="button" className="btn primary" onClick={runShellcode} disabled={scRunning || !scFile}>
               {scRunning ? t('common.loading') : t('advanced.shellcodeRun')}
             </button>
           </div>
         </div>
         {scError && <div className="error-banner">{scError}</div>}
         {scMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {scMsg}
           </div>
         )}
@@ -614,14 +614,14 @@ export default function AdvancedTab({ sessionId }: { sessionId: string }) {
             <input value={peBinPath} onChange={(e) => setPeBinPath(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runPsExec} disabled={peRunning || !peHost || !peProfile}>
+            <button type="button" className="btn primary" onClick={runPsExec} disabled={peRunning || !peHost || !peProfile}>
               {peRunning ? t('common.loading') : t('advanced.psexecRun')}
             </button>
           </div>
         </div>
         {peError && <div className="error-banner">{peError}</div>}
         {peMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {peMsg}
           </div>
         )}

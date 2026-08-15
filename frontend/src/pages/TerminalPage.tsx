@@ -118,7 +118,7 @@ export default function TerminalPage() {
           <span className={`badge ${connected ? 'green' : 'red'}`}>
             {connected ? t('terminal.connected') : t('terminal.disconnected')}
           </span>
-          <button className="btn" onClick={() => navigate('/')}>
+          <button type="button" className="btn" onClick={() => navigate('/')}>
             {t('common.back')}
           </button>
         </div>

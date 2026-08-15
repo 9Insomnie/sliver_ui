@@ -28,7 +28,7 @@ export default function DetailDrawer({ open, title, subtitle, onClose, children,
             <div className="drawer-title">{title}</div>
             {subtitle && <div className="drawer-sub mono">{subtitle}</div>}
           </div>
-          <button className="btn icon" onClick={onClose} aria-label="Close">
+          <button type="button" className="btn icon" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>

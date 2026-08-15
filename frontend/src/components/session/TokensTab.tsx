@@ -157,15 +157,15 @@ export default function TokensTab({ sessionId, os }: { sessionId: string; os: st
           </div>
         )}
         <div className="field" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn primary" onClick={run} disabled={running}>
+          <button type="button" className="btn primary" onClick={run} disabled={running}>
             {running ? t('common.loading') : t('tokens.execute')}
           </button>
         </div>
       </div>
       <div className="toolbar" style={{ marginBottom: 12 }}>
-        <button className="btn sm" onClick={revToSelf}>{t('tokens.revToSelf')}</button>
-        <button className="btn sm" onClick={loadOwner} disabled={busy}>{t('tokens.tokenOwner')}</button>
-        <button className="btn sm" onClick={loadPrivs} disabled={busy}>{t('tokens.getPrivs')}</button>
+        <button type="button" className="btn sm" onClick={revToSelf}>{t('tokens.revToSelf')}</button>
+        <button type="button" className="btn sm" onClick={loadOwner} disabled={busy}>{t('tokens.tokenOwner')}</button>
+        <button type="button" className="btn sm" onClick={loadPrivs} disabled={busy}>{t('tokens.getPrivs')}</button>
       </div>
       {owner && (
         <div className="toolbar" style={{ marginBottom: 12 }}>
@@ -175,7 +175,7 @@ export default function TokensTab({ sessionId, os }: { sessionId: string; os: st
       )}
       {error && <div className="error-banner">{error}</div>}
       {message && (
-        <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+        <div className="success-banner">
           {message}
         </div>
       )}
@@ -228,7 +228,7 @@ export default function TokensTab({ sessionId, os }: { sessionId: string; os: st
             <input value={runAsArgs} onChange={(e) => setRunAsArgs(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runRunAs} disabled={busy}>
+            <button type="button" className="btn primary" onClick={runRunAs} disabled={busy}>
               {t('tokens.runAs')}
             </button>
           </div>
@@ -248,7 +248,7 @@ export default function TokensTab({ sessionId, os }: { sessionId: string; os: st
             <input value={exeTokenArgs} onChange={(e) => setExeTokenArgs(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runExecuteToken} disabled={busy}>
+            <button type="button" className="btn primary" onClick={runExecuteToken} disabled={busy}>
               {t('tokens.exeToken')}
             </button>
           </div>

@@ -33,7 +33,7 @@ export default function InlineEdit({ value, onSave, mono }: Props) {
 
   if (!editing) {
     return (
-      <button
+      <button type="button"
         className={`inline-edit ${mono ? 'mono' : ''}`}
         onClick={() => setEditing(true)}
         title={t('common.rename')}

@@ -18,6 +18,20 @@ vi.mock('../../lib/api', () => ({
 
 const mockedApi = vi.mocked(api)
 
+// jsdom's FileReader is asynchronous and awkward to drive in tests; use a
+// deterministic fake that resolves the file text on readAsText.
+class FakeFileReader {
+  result = ''
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  readAsText(blob: Blob) {
+    blob.text().then((text) => {
+      this.result = text
+      this.onload?.()
+    })
+  }
+}
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -35,9 +49,30 @@ function mockConnected(connected: boolean) {
   })
 }
 
+const sampleConfig = {
+  operator: 'local',
+  lhost: '127.0.0.1',
+  lport: 31337,
+  ca_certificate: 'ca',
+  certificate: 'cert',
+  private_key: 'key',
+}
+const sampleConfigText = JSON.stringify(sampleConfig)
+
+async function loadConfigFile() {
+  const input = screen.getByLabelText('Select Config File') as HTMLInputElement
+  const file = new File([sampleConfigText], 'local.json', { type: 'application/json' })
+  Object.defineProperty(input, 'files', { value: [file], configurable: true })
+  fireEvent.change(input)
+  await waitFor(() => {
+    expect((screen.getByDisplayValue('127.0.0.1') as HTMLInputElement).value).toBe('127.0.0.1')
+  })
+}
+
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal('FileReader', FakeFileReader)
     mockedApi.listProfiles.mockResolvedValue({ profiles: ['local', 'lab'] })
     mockConnected(false)
   })
@@ -49,22 +84,39 @@ describe('SettingsPage', () => {
     view.unmount()
   })
 
-  it('connects and shows the success message', async () => {
-    mockedApi.connect.mockResolvedValue({ success: true })
+  it('replaced the manual input form with a config-file loader', async () => {
     const view = renderPage()
-    await waitFor(() => expect(screen.getByText('Connect')).toBeInTheDocument())
-    fireEvent.click(screen.getByText('Connect'))
-    await waitFor(() => expect(screen.getByText('Connected')).toBeInTheDocument())
-    expect(mockedApi.connect).toHaveBeenCalledWith({ name: 'local', lhost: '', lport: 0 })
+    await waitFor(() => expect(screen.getByText('Select Config File')).toBeInTheDocument())
+    expect(screen.queryByText('Manual Connection')).not.toBeInTheDocument()
     view.unmount()
   })
 
-  it('shows an error banner when connect fails', async () => {
+  it('connects from a loaded config file', async () => {
+    mockedApi.connect.mockResolvedValue({ success: true })
+    const view = renderPage()
+    await loadConfigFile()
+    fireEvent.click(screen.getByText('Connect'))
+    await waitFor(() => expect(screen.getByText('Connected')).toBeInTheDocument())
+    expect(mockedApi.connect).toHaveBeenCalledWith({ content: sampleConfigText })
+    view.unmount()
+  })
+
+  it('shows an error banner when connect from file fails', async () => {
     mockedApi.connect.mockResolvedValue({ success: false, error: 'boom' })
     const view = renderPage()
-    await waitFor(() => expect(screen.getByText('Connect')).toBeInTheDocument())
+    await loadConfigFile()
     fireEvent.click(screen.getByText('Connect'))
     await waitFor(() => expect(screen.getByText(/boom/)).toBeInTheDocument())
+    view.unmount()
+  })
+
+  it('shows an error banner when the config file is invalid', async () => {
+    const view = renderPage()
+    const input = screen.getByLabelText('Select Config File') as HTMLInputElement
+    const file = new File(['not json'], 'bad.json', { type: 'application/json' })
+    Object.defineProperty(input, 'files', { value: [file], configurable: true })
+    fireEvent.change(input)
+    await waitFor(() => expect(screen.getByText(/Invalid config file/)).toBeInTheDocument())
     view.unmount()
   })
 

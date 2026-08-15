@@ -166,10 +166,10 @@ export default function FilesTab({
     <div className="card card-flush">
       <div style={{ padding: '14px 16px' }}>
         <div className="fs-toolbar">
-          <button className="btn sm" onClick={up} disabled={!path || path === '/'}>
+          <button type="button" className="btn sm" onClick={up} disabled={!path || path === '/'}>
             {t('files.up')}
           </button>
-          <button className="btn sm" onClick={refresh}>
+          <button type="button" className="btn sm" onClick={refresh}>
             {t('files.refresh')}
           </button>
           <input
@@ -180,13 +180,13 @@ export default function FilesTab({
               if (e.key === 'Enter') load(path)
             }}
           />
-          <button className="btn sm" onClick={() => load(path)}>
+          <button type="button" className="btn sm" onClick={() => load(path)}>
             {t('files.reload')}
           </button>
-          <button className="btn sm primary" onClick={mkdir}>
+          <button type="button" className="btn sm primary" onClick={mkdir}>
             {t('files.mkdir')}
           </button>
-          <button className="btn sm" onClick={() => uploadRef.current?.click()}>
+          <button type="button" className="btn sm" onClick={() => uploadRef.current?.click()}>
             {t('files.upload')}
           </button>
           <input ref={uploadRef} type="file" hidden onChange={onUpload} />
@@ -198,7 +198,7 @@ export default function FilesTab({
             style={{
               borderColor: 'var(--green)',
               color: 'var(--green)',
-              background: 'rgba(63,213,143,0.08)',
+              background: 'var(--success-bg)',
             }}
           >
             {message}
@@ -241,18 +241,18 @@ export default function FilesTab({
                 <td className="mono">{fmtTime(f.ModTime)}</td>
                 <td>
                   <div className="fs-actions">
-                    <button className="btn sm" onClick={() => view(f.Name, f.IsDir)}>
+                    <button type="button" className="btn sm" onClick={() => view(f.Name, f.IsDir)}>
                       {f.IsDir ? t('files.path') : t('files.cat')}
                     </button>
                     {!f.IsDir && (
-                      <button className="btn sm" onClick={() => download(f.Name, false)}>
+                      <button type="button" className="btn sm" onClick={() => download(f.Name, false)}>
                         {t('files.download')}
                       </button>
                     )}
-                    <button className="btn sm" onClick={() => rename(f.Name)}>
+                    <button type="button" className="btn sm" onClick={() => rename(f.Name)}>
                       {t('files.rename')}
                     </button>
-                    <button
+                    <button type="button"
                       className="btn sm danger"
                       onClick={() => {
                         setRecursive(false)
@@ -274,7 +274,7 @@ export default function FilesTab({
           <div className="file-viewer-header">
             <span className="mono">{viewing.name}</span>
             <span>
-              <button className="btn sm danger" onClick={() => setViewing(null)}>
+              <button type="button" className="btn sm danger" onClick={() => setViewing(null)}>
                 {t('files.close')}
               </button>
             </span>

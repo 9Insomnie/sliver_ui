@@ -56,7 +56,7 @@ export default function ExecTab({ sessionId }: { sessionId: string }) {
           onChange={(e) => setArgs(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && run()}
         />
-        <button className="btn primary" onClick={run} disabled={running || !path}>
+        <button type="button" className="btn primary" onClick={run} disabled={running || !path}>
           {running ? t('exec.running') : t('exec.run')}
         </button>
       </div>

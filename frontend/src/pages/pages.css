@@ -1,11 +1,37 @@
 /* ─── Page chrome ──────────────────────────────────────────────── */
 .page {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 22px 28px 32px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.page::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.page::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+  background-clip: content-box;
+}
+
+.page::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .page-header {
@@ -350,6 +376,19 @@ table.data tbody tr:last-child td {
   background: var(--red-bg);
   border: 1px solid rgba(229, 72, 77, 0.30);
   color: var(--red);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 成功提示 — 与 .error-banner 对称,替代此前复用 .error-banner + 内联绿覆盖的语义错配 */
+.success-banner {
+  background: rgba(76, 183, 130, 0.10);
+  border: 1px solid rgba(76, 183, 130, 0.30);
+  color: var(--green);
   padding: 8px 12px;
   border-radius: 6px;
   font-size: var(--fs-sm);
@@ -1316,6 +1355,14 @@ table.data tbody tr:last-child td {
   color: var(--text-dim);
   font-size: 14px;
   line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.toast-close:hover {
+  color: var(--text);
 }
 
 /* ─── Empty state ──────────────────────────────────────────────── */

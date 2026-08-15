@@ -53,7 +53,7 @@ export const api = {
 
   overview: () => request<OverviewData>('/overview'),
 
-  connect: (config: { name: string; lhost: string; lport: number }) =>
+  connect: (config: { content: string }) =>
     request<{ success: boolean; error?: string }>('/connect', { method: 'POST', body: JSON.stringify(config) }),
 
   disconnect: () => request<{ success: boolean }>('/disconnect', { method: 'POST' }),

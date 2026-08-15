@@ -62,10 +62,10 @@ export default function ConfirmDialog({
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-footer">
-          <button className="btn" onClick={onCancel} disabled={busy}>
+          <button type="button" className="btn" onClick={onCancel} disabled={busy}>
             {cancelLabel || t('common.cancel')}
           </button>
-          <button
+          <button type="button"
             ref={okRef}
             className={`btn ${danger ? 'danger' : 'primary'}`}
             onClick={onConfirm}

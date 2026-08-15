@@ -132,6 +132,16 @@ export default function DataTable<T>({
                 <th
                   key={col.key}
                   className={col.sortable ? 'sortable' : undefined}
+                  scope="col"
+                  aria-sort={
+                    col.sortable
+                      ? sort?.key === col.key
+                        ? sort.dir === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                      : undefined
+                  }
                   style={col.width ? { width: col.width } : undefined}
                   onClick={() => toggleSort(col)}
                 >

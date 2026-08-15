@@ -71,7 +71,7 @@ export default function NetworkTab({ sessionId }: { sessionId: string }) {
               <div className="card-title" style={{ marginBottom: 0 }}>
                 {t('network.connections')}
               </div>
-              <button className="btn sm" onClick={load}>
+              <button type="button" className="btn sm" onClick={load}>
                 {t('network.refresh')}
               </button>
             </div>
@@ -101,7 +101,7 @@ export default function NetworkTab({ sessionId }: { sessionId: string }) {
                   {entries.length > visible && (
                     <tr>
                       <td colSpan={5} style={{ textAlign: 'center', padding: '10px' }}>
-                        <button className="btn sm" onClick={() => setVisible((v) => v + 50)}>
+                        <button type="button" className="btn sm" onClick={() => setVisible((v) => v + 50)}>
                           {t('common.loadMore', { count: entries.length - visible })}
                         </button>
                       </td>

@@ -73,7 +73,7 @@ export default function EventsPage() {
         <div className="toolbar">
           <div className="seg">
             {(['all', 'session', 'beacon', 'listener'] as const).map((f) => (
-              <button key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
+              <button type="button" key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
                 {f === 'all'
                   ? t('events.filterAll')
                   : f === 'session'
@@ -84,7 +84,7 @@ export default function EventsPage() {
               </button>
             ))}
           </div>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>

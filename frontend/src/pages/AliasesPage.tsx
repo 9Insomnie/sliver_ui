@@ -198,10 +198,10 @@ export default function AliasesPage() {
           <div className="page-sub">{t('aliases.sub', { count: aliases.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn primary" onClick={() => setInstallOpen(true)}>
+          <button type="button" className="btn primary" onClick={() => setInstallOpen(true)}>
             {t('aliases.install')}
           </button>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -234,7 +234,7 @@ export default function AliasesPage() {
         footer={
           selected && (
             <div className="drawer-actions">
-              <button className="btn danger" onClick={() => setRemoving(selected)}>
+              <button type="button" className="btn danger" onClick={() => setRemoving(selected)}>
                 {t('aliases.remove')}
               </button>
             </div>
@@ -318,7 +318,7 @@ export default function AliasesPage() {
                   <>
                     <div className="seg">
                       {(['x84', 'x86', 'x64'] as const).map((a) => (
-                        <button key={a} className={runArch === a ? 'active' : ''} onClick={() => setRunArch(a)}>
+                        <button type="button" key={a} className={runArch === a ? 'active' : ''} onClick={() => setRunArch(a)}>
                           {a}
                         </button>
                       ))}
@@ -329,7 +329,7 @@ export default function AliasesPage() {
                     <input className="input" value={runClass} onChange={(e) => setRunClass(e.target.value)} />
                   </>
                 )}
-                <button className="btn primary" disabled={runBusy || !runSession} onClick={run}>
+                <button type="button" className="btn primary" disabled={runBusy || !runSession} onClick={run}>
                   {runBusy ? t('common.loading') : t('aliases.run')}
                 </button>
                 {runMeta && <div className="run-meta mono">{runMeta}</div>}
@@ -347,10 +347,10 @@ export default function AliasesPage() {
         onClose={() => setInstallOpen(false)}
         footer={
           <div className="drawer-actions">
-            <button className="btn" onClick={() => setInstallOpen(false)}>
+            <button type="button" className="btn" onClick={() => setInstallOpen(false)}>
               {t('common.cancel')}
             </button>
-            <button className="btn primary" disabled={installBusy || !installFile} onClick={install}>
+            <button type="button" className="btn primary" disabled={installBusy || !installFile} onClick={install}>
               {installBusy ? t('common.loading') : t('aliases.install')}
             </button>
           </div>

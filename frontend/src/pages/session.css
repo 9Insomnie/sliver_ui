@@ -77,35 +77,7 @@
   text-transform: uppercase;
 }
 
-.side-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 0;
-  font-size: var(--fs-sm);
-}
-
-.side-label {
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-  flex-shrink: 0;
-}
-
-.side-value {
-  color: var(--text);
-  font-size: var(--fs-sm);
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 160px;
-}
-
-.side-value.mono {
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-}
+/* .side-row/.side-label/.side-value/.side-value.mono 已在 pages.css 统一定义,此处删除重复副本(DYY 冲突)。 */
 
 .rename-inline {
   display: flex;
@@ -119,17 +91,7 @@
   font-size: var(--fs-sm);
 }
 
-.side-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 4px;
-}
-
-.side-actions .btn {
-  width: 100%;
-  justify-content: center;
-}
+/* .side-actions/.side-actions .btn 已在 pages.css 统一定义,此处删除重复副本。 */
 
 /* ─── Session meta strip (替代原 session-meta 卡片) ────────── */
 .session-meta {
@@ -270,7 +232,7 @@
 }
 .file-viewer pre {
   padding: 12px 14px;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   white-space: pre-wrap;
   word-break: break-all;
@@ -331,7 +293,7 @@
 }
 .exec-output pre {
   padding: 12px 14px;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   white-space: pre-wrap;
   word-break: break-all;
@@ -446,7 +408,7 @@
 }
 .reg-value pre {
   padding: 10px 14px;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   white-space: pre-wrap;
   word-break: break-all;

@@ -74,7 +74,7 @@ export default function ListenersPage() {
           <div className="page-sub">{t('listeners.sub', { count: jobs.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -107,7 +107,7 @@ export default function ListenersPage() {
               <input type="checkbox" checked={tls} onChange={(e) => setTls(e.target.checked)} />
               {t('listeners.enableTls')}
             </label>
-            <button className="btn primary" onClick={start} disabled={starting}>
+            <button type="button" className="btn primary" onClick={start} disabled={starting}>
               {starting ? t('listeners.starting') : t('listeners.start')}
             </button>
           </div>
@@ -150,7 +150,7 @@ export default function ListenersPage() {
                 <td className="mono">{j.Port}</td>
                 <td className="mono">{j.Domains?.join(', ') || '-'}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => setStopping(j)}>
+                  <button type="button" className="btn sm danger" onClick={() => setStopping(j)}>
                     {t('listeners.stop')}
                   </button>
                 </td>

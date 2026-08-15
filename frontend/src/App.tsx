@@ -132,7 +132,7 @@ function AppLayout() {
       )
     }
     return (
-      <button
+      <button type="button"
         key={item.path + item.key}
         className={`nav-item ${active ? 'active' : ''}`}
         onClick={() => navigate(item.path)}
@@ -208,7 +208,7 @@ function AppLayout() {
                   : t('app.notConnected')}
             </span>
           </div>
-          <button className="lang-switch" onClick={toggleLang} title={t('app.language')}>
+          <button type="button" className="lang-switch" onClick={toggleLang} title={t('app.language')} aria-label={t('app.language')}>
             {ICONS.globe}
             <span>{lang === 'zh' ? 'EN' : '中'}</span>
           </button>
@@ -217,10 +217,11 @@ function AppLayout() {
       <div className="main">
         <header className="topbar">
           <div className="topbar-left">
-            <button
+            <button type="button"
               className="btn icon sidebar-toggle"
               onClick={() => setCollapsed((c) => !c)}
               title={collapsed ? t('app.expand') : t('app.collapse')}
+              aria-label={collapsed ? t('app.expand') : t('app.collapse')}
             >
               {ICONS.menu}
             </button>

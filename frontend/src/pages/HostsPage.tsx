@@ -85,7 +85,7 @@ export default function HostsPage() {
       key: '_actions',
       label: '',
       render: (h) => (
-        <button
+        <button type="button"
           className="btn sm danger"
           onClick={() => setRemoving({ kind: 'host', host: h })}
         >
@@ -103,7 +103,7 @@ export default function HostsPage() {
           <div className="page-sub">{t('hosts.sub', { count: hosts.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -147,7 +147,7 @@ export default function HostsPage() {
                       <td className="mono">{ioc.Path}</td>
                       <td className="mono dim">{shortHash(ioc.FileHash)}</td>
                       <td>
-                        <button
+                        <button type="button"
                           className="btn sm danger"
                           onClick={() => setRemoving({ kind: 'ioc', host: h, ioc })}
                         >

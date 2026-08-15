@@ -127,7 +127,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           <input value={path} onChange={(e) => setPath(e.target.value)} />
         </div>
         <div className="field" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn primary" onClick={() => browse(path)}>
+          <button type="button" className="btn primary" onClick={() => browse(path)}>
             {t('registry.browse')}
           </button>
         </div>
@@ -139,7 +139,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           style={{
             borderColor: 'var(--green)',
             color: 'var(--green)',
-            background: 'rgba(63,213,143,0.08)',
+            background: 'var(--success-bg)',
           }}
         >
           {message}
@@ -151,7 +151,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
       ) : (
         <div className="reg-cols">
           <div className="card card-flush">
-            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-dim)' }}>
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 'var(--fs-sm)', color: 'var(--text-dim)' }}>
               {t('registry.subkeys')} / {t('registry.values')}
             </div>
             {items.length === 0 ? (
@@ -171,7 +171,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
                       </svg>
                     )}
                     <span className="mono">{it.name}</span>
-                    <button
+                    <button type="button"
                       className="reg-del"
                       title={t('registry.delete')}
                       onClick={(e) => {
@@ -188,7 +188,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           </div>
 
           <div className="card card-flush">
-            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-dim)' }}>
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 'var(--fs-sm)', color: 'var(--text-dim)' }}>
               {t('registry.value')}
             </div>
             {readValue ? (
@@ -214,11 +214,11 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           onChange={(e) => setWriteKey(e.target.value)}
           style={{
             padding: '6px 10px',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius)',
             border: '1px solid var(--border-strong)',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--surface-soft)',
             color: 'var(--text)',
-            fontSize: 13,
+            fontSize: 'var(--fs-base)',
             flex: 1,
             minWidth: 120,
           }}
@@ -231,11 +231,11 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           onChange={(e) => setWriteValue(e.target.value)}
           style={{
             padding: '6px 10px',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius)',
             border: '1px solid var(--border-strong)',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--surface-soft)',
             color: 'var(--text)',
-            fontSize: 13,
+            fontSize: 'var(--fs-base)',
             flex: 2,
             minWidth: 160,
           }}
@@ -245,11 +245,11 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           onChange={(e) => setWriteType(e.target.value)}
           style={{
             padding: '6px 10px',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius)',
             border: '1px solid var(--border-strong)',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--surface-soft)',
             color: 'var(--text)',
-            fontSize: 13,
+            fontSize: 'var(--fs-base)',
             flexShrink: 0,
           }}
         >
@@ -257,7 +257,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
           <option value="dword">DWORD</option>
           <option value="qword">QWORD</option>
         </select>
-        <button
+        <button type="button"
           className="btn sm primary"
           onClick={() => write(writeKey, writeValue)}
           disabled={!writeKey}

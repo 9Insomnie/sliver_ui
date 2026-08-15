@@ -72,7 +72,7 @@ export default function JobsPage() {
       key: 'Control',
       label: '',
       render: (j) => (
-        <button className="btn sm danger" onClick={() => setStopping(j)}>
+        <button type="button" className="btn sm danger" onClick={() => setStopping(j)}>
           {t('listeners.stop')}
         </button>
       ),
@@ -87,7 +87,7 @@ export default function JobsPage() {
           <div className="page-sub">{t('jobs.sub', { count: jobs.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>

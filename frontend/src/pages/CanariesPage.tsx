@@ -87,14 +87,14 @@ export default function CanariesPage() {
         </div>
         <div className="toolbar">
           <div className="seg">
-            <button className={!burnedOnly ? 'active' : ''} onClick={() => setBurnedOnly(false)}>
+            <button type="button" className={!burnedOnly ? 'active' : ''} onClick={() => setBurnedOnly(false)}>
               {t('canaries.filterAll')}
             </button>
-            <button className={burnedOnly ? 'active' : ''} onClick={() => setBurnedOnly(true)}>
+            <button type="button" className={burnedOnly ? 'active' : ''} onClick={() => setBurnedOnly(true)}>
               {t('canaries.filterBurned')}
             </button>
           </div>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>

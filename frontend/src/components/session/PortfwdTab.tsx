@@ -79,7 +79,7 @@ export default function PortfwdTab({ sessionId }: { sessionId: string }) {
           <input type="number" value={remotePort} onChange={(e) => setRemotePort(e.target.value)} />
         </div>
         <div className="field" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn primary" onClick={add}>
+          <button type="button" className="btn primary" onClick={add}>
             {t('portfwd.add')}
           </button>
         </div>
@@ -91,7 +91,7 @@ export default function PortfwdTab({ sessionId }: { sessionId: string }) {
           style={{
             borderColor: 'var(--green)',
             color: 'var(--green)',
-            background: 'rgba(63,213,143,0.08)',
+            background: 'var(--success-bg)',
           }}
         >
           {message}
@@ -120,7 +120,7 @@ export default function PortfwdTab({ sessionId }: { sessionId: string }) {
               <td className="mono">{`${f.Host}:${f.Port}`}</td>
               <td className="mono">{f.SessionID.slice(0, 12)}</td>
               <td>
-                <button className="btn sm danger" onClick={() => stop(f.LocalPort)}>
+                <button type="button" className="btn sm danger" onClick={() => stop(f.LocalPort)}>
                   {t('portfwd.stop')}
                 </button>
               </td>

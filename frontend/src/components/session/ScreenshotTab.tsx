@@ -36,11 +36,11 @@ export default function ScreenshotTab({ sessionId }: { sessionId: string }) {
   return (
     <div className="card">
       <div className="screenshot-actions">
-        <button className="btn primary" onClick={take} disabled={taking}>
+        <button type="button" className="btn primary" onClick={take} disabled={taking}>
           {taking ? t('screenshot.taking') : t('screenshot.take')}
         </button>
         {shots.length > 0 && (
-          <button className="btn sm danger" onClick={() => { setShots([]); setSelected(null) }}>
+          <button type="button" className="btn sm danger" onClick={() => { setShots([]); setSelected(null) }}>
             {t('screenshot.clear')}
           </button>
         )}
@@ -54,7 +54,7 @@ export default function ScreenshotTab({ sessionId }: { sessionId: string }) {
       {shots.length > 1 && (
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
           {shots.map((s) => (
-            <button
+            <button type="button"
               key={s.id}
               onClick={() => setSelected(s.id)}
               style={{

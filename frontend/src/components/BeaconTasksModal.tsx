@@ -67,10 +67,10 @@ export default function BeaconTasksModal({
             <div className="modal-sub mono">{beaconName}</div>
           </div>
           <div className="modal-actions">
-            <button className="btn sm" onClick={load}>
+            <button type="button" className="btn sm" onClick={load}>
               {t('tasks.refresh')}
             </button>
-            <button className="btn sm" onClick={onClose}>
+            <button type="button" className="btn sm" onClick={onClose}>
               {t('tasks.close')}
             </button>
           </div>
@@ -83,7 +83,7 @@ export default function BeaconTasksModal({
             <>
               <div className="task-list">
                 {tasks.map((task) => (
-                  <button
+                  <button type="button"
                     key={task.ID}
                     className={`task-row ${selected?.ID === task.ID ? 'active' : ''}`}
                     onClick={() => select(task)}

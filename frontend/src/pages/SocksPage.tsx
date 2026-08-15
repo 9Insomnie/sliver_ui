@@ -87,7 +87,7 @@ export default function SocksPage() {
           <div className="page-sub">{t('socks.sub', { count: proxies.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -99,7 +99,7 @@ export default function SocksPage() {
           style={{
             borderColor: 'var(--green)',
             color: 'var(--green)',
-            background: 'rgba(63,213,143,0.08)',
+            background: 'var(--success-bg)',
           }}
         >
           {message}
@@ -140,7 +140,7 @@ export default function SocksPage() {
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={start} disabled={starting || !sessionId}>
+            <button type="button" className="btn primary" onClick={start} disabled={starting || !sessionId}>
               {starting ? t('socks.starting') : t('socks.start')}
             </button>
           </div>
@@ -179,7 +179,7 @@ export default function SocksPage() {
                 <td className="mono">{`${p.BindAddr}:${p.BindPort}`}</td>
                 <td>{p.Username ? p.Username : '-'}</td>
                 <td>
-                  <button className="btn sm danger" onClick={() => stop(p.ID)}>
+                  <button type="button" className="btn sm danger" onClick={() => stop(p.ID)}>
                     {t('socks.stop')}
                   </button>
                 </td>

@@ -127,13 +127,13 @@ export default function BeaconsPage() {
               style={{ width: 56 }}
             />
           </label>
-          <button className="btn" onClick={prune} disabled={pruning}>
+          <button type="button" className="btn" onClick={prune} disabled={pruning}>
             {pruning ? t('common.loading') : t('beacons.prune')}
           </button>
-          <button className={monitoring ? 'btn active' : 'btn'} onClick={toggleMonitor} disabled={monitorBusy}>
+          <button type="button" className={monitoring ? 'btn active' : 'btn'} onClick={toggleMonitor} disabled={monitorBusy}>
             {monitorBusy ? t('common.loading') : monitoring ? t('beacons.monitorOn') : t('beacons.monitorOff')}
           </button>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -165,7 +165,7 @@ export default function BeaconsPage() {
                 <tr key={b.ID}>
                   <td className="mono">
                     <InlineEdit value={b.Name} onSave={(name) => rename(b, name)} mono />
-                    <button className="link-btn" onClick={() => navigate(`/beacons/${b.ID}`)}>
+                    <button type="button" className="link-btn" onClick={() => navigate(`/beacons/${b.ID}`)}>
                       {t('beacons.open')}
                     </button>
                   </td>
@@ -185,10 +185,10 @@ export default function BeaconsPage() {
                   </td>
                   <td>
                     <div className="fs-actions">
-                      <button className="btn sm" onClick={() => setTasksFor(b)}>
+                      <button type="button" className="btn sm" onClick={() => setTasksFor(b)}>
                         {t('beacons.tasks')}
                       </button>
-                      <button className="btn sm danger" onClick={() => setRemoving(b)}>
+                      <button type="button" className="btn sm danger" onClick={() => setRemoving(b)}>
                         {t('beacons.remove')}
                       </button>
                     </div>

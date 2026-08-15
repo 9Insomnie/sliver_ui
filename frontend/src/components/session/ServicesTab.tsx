@@ -198,23 +198,23 @@ export default function ServicesTab({ sessionId, os }: { sessionId: string; os: 
             <input value={svcArgs} onChange={(e) => setSvcArgs(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={startService} disabled={busy || !svcName}>
+            <button type="button" className="btn primary" onClick={startService} disabled={busy || !svcName}>
               {busy ? t('common.working') : t('services.start')}
             </button>
           </div>
         </div>
         {svcMsg && (
-          <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+          <div className="success-banner">
             {svcMsg}
           </div>
         )}
         <div className="toolbar" style={{ marginTop: 8 }}>
           {os === 'windows' && (
             <>
-              <button className="btn sm" onClick={() => stopService(svcName)} disabled={!svcName}>
+              <button type="button" className="btn sm" onClick={() => stopService(svcName)} disabled={!svcName}>
                 {t('services.stop')}
               </button>
-              <button className="btn sm danger" onClick={() => removeService(svcName)} disabled={!svcName}>
+              <button type="button" className="btn sm danger" onClick={() => removeService(svcName)} disabled={!svcName}>
                 {t('services.remove')}
               </button>
             </>
@@ -253,7 +253,7 @@ export default function ServicesTab({ sessionId, os }: { sessionId: string; os: 
             <input value={sshCmd} onChange={(e) => setSshCmd(e.target.value)} placeholder="whoami && uname -a" />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={runSsh} disabled={busy || !sshHost || !sshCmd}>
+            <button type="button" className="btn primary" onClick={runSsh} disabled={busy || !sshHost || !sshCmd}>
               {busy ? t('common.working') : t('services.sshRun')}
             </button>
           </div>
@@ -291,7 +291,7 @@ export default function ServicesTab({ sessionId, os }: { sessionId: string; os: 
             <input type="file" onChange={(e) => setExtFile(e.target.files?.[0] || null)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={registerExtension} disabled={busy || !extName || !extFile}>
+            <button type="button" className="btn primary" onClick={registerExtension} disabled={busy || !extName || !extFile}>
               {busy ? t('common.working') : t('services.extRegister')}
             </button>
           </div>
@@ -315,7 +315,7 @@ export default function ServicesTab({ sessionId, os }: { sessionId: string; os: 
               <tr key={n}>
                 <td className="mono">{n}</td>
                 <td>
-                  <button className="btn sm" onClick={() => setCallName(n)}>
+                  <button type="button" className="btn sm" onClick={() => setCallName(n)}>
                     {t('services.extCall')}
                   </button>
                 </td>
@@ -343,7 +343,7 @@ export default function ServicesTab({ sessionId, os }: { sessionId: string; os: 
             </label>
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={callExtension} disabled={busy || !callName || !callExport}>
+            <button type="button" className="btn primary" onClick={callExtension} disabled={busy || !callName || !callExport}>
               {busy ? t('common.working') : t('services.extCall')}
             </button>
           </div>

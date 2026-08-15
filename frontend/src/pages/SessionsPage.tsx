@@ -190,10 +190,10 @@ export default function SessionsPage() {
             <kbd className="kbd">T</kbd> {t('common.terminal')}
             <kbd className="kbd">F</kbd> {t('sessions.open')}
           </span>
-          <button className="btn" onClick={prune} disabled={pruning}>
+          <button type="button" className="btn" onClick={prune} disabled={pruning}>
             {pruning ? t('common.loading') : t('sessions.prune')}
           </button>
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>

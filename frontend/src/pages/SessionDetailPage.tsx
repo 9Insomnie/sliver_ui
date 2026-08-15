@@ -129,7 +129,7 @@ export default function SessionDetailPage() {
     <div className="page page-detail">
       {error && <div className="error-banner">{error}</div>}
       {pingMsg && (
-        <div className="error-banner" style={{ borderColor: 'var(--green)', color: 'var(--green)', background: 'rgba(63,213,143,0.08)' }}>
+        <div className="success-banner">
           {pingMsg}
         </div>
       )}
@@ -150,22 +150,22 @@ export default function SessionDetailPage() {
                 </div>
               </div>
               <div className="toolbar">
-                <button className="btn primary" onClick={() => navigate(`/sessions/${session.ID}/terminal`)}>
+                <button type="button" className="btn primary" onClick={() => navigate(`/sessions/${session.ID}/terminal`)}>
                   {t('detail.openTerminal')}
                 </button>
-                <button className="btn" onClick={() => setTab('processes')}>
+                <button type="button" className="btn" onClick={() => setTab('processes')}>
                   {t('detail.tabs.processes')}
                 </button>
-                <button className="btn" onClick={() => setTab('network')}>
+                <button type="button" className="btn" onClick={() => setTab('network')}>
                   {t('detail.tabs.network')}
                 </button>
-                <button className="btn" onClick={() => setTab('screenshot')}>
+                <button type="button" className="btn" onClick={() => setTab('screenshot')}>
                   {t('detail.tabs.screenshot')}
                 </button>
-                <button className="btn" onClick={ping} title="Ping">
+                <button type="button" className="btn" onClick={ping} title="Ping">
                   {t('detail.ping')}
                 </button>
-                <button className="btn" onClick={() => navigate('/')}>
+                <button type="button" className="btn" onClick={() => navigate('/')}>
                   {t('detail.back')}
                 </button>
               </div>
@@ -173,7 +173,7 @@ export default function SessionDetailPage() {
 
             <div className="tabs">
               {TABS.map((key) => (
-                <button
+                <button type="button"
                   key={key}
                   className={`tab ${tab === key ? 'active' : ''}`}
                   onClick={() => setTab(key)}
@@ -256,10 +256,10 @@ export default function SessionDetailPage() {
             </div>
 
             <div className="side-actions">
-              <button className="btn" onClick={() => setClosing(true)}>
+              <button type="button" className="btn" onClick={() => setClosing(true)}>
                 {t('detail.sidebar.close')}
               </button>
-              <button className="btn danger" onClick={() => setKilling(true)}>
+              <button type="button" className="btn danger" onClick={() => setKilling(true)}>
                 {t('detail.sidebar.kill')}
               </button>
             </div>

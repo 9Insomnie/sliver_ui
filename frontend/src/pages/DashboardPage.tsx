@@ -169,7 +169,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
 
       <div className="dash-stats">
         {statCards.map((c) => (
-          <button key={c.label} className="dash-stat" onClick={() => navigate(c.to)}>
+          <button type="button" key={c.label} className="dash-stat" onClick={() => navigate(c.to)}>
             <div className="dash-stat-value mono">{c.value}</div>
             <div className="dash-stat-label">{c.label}</div>
           </button>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
       <div className="card card-flush">
         <div className="card-title" style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', margin: 0 }}>
           {t('dashboard.recentActivity')}
-          <button className="card-link" onClick={() => navigate('/events')}>
+          <button type="button" className="card-link" onClick={() => navigate('/events')}>
             {t('common.viewAll')}
           </button>
         </div>

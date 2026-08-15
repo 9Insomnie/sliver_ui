@@ -78,7 +78,7 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
   return (
     <div className="card card-flush">
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button className="btn sm" onClick={load}>
+        <button type="button" className="btn sm" onClick={load}>
           {t('processes.refresh')}
         </button>
       </div>
@@ -115,7 +115,7 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
                 </td>
                 <td>
                   <div className="fs-actions">
-                    <button
+                    <button type="button"
                       className="btn sm"
                       onClick={() => {
                         setTargetPid(p.PID)
@@ -124,10 +124,10 @@ export default function ProcessesTab({ sessionId }: { sessionId: string }) {
                     >
                       {t('processes.migrate')}
                     </button>
-                    <button className="btn sm" onClick={() => dump(p.PID)}>
+                    <button type="button" className="btn sm" onClick={() => dump(p.PID)}>
                       {t('processes.dump')}
                     </button>
-                    <button
+                    <button type="button"
                       className="btn sm danger"
                       onClick={() => {
                         setTargetPid(p.PID)

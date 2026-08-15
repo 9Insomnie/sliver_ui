@@ -47,7 +47,7 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
         item.label === '-' ? (
           <div key={i} className="context-menu-sep" />
         ) : (
-          <button
+          <button type="button"
             key={i}
             role="menuitem"
             className={`context-menu-item${item.danger ? ' danger' : ''}`}

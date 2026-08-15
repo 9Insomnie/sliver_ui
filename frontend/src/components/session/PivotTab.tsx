@@ -76,7 +76,7 @@ export default function PivotTab({ sessionId }: { sessionId: string }) {
             <input value={bindAddress} onChange={(e) => setBindAddress(e.target.value)} />
           </div>
           <div className="field" style={{ justifyContent: 'flex-end' }}>
-            <button className="btn primary" onClick={startListener} disabled={busy}>
+            <button type="button" className="btn primary" onClick={startListener} disabled={busy}>
               {busy ? t('common.working') : t('pivot.start')}
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function PivotTab({ sessionId }: { sessionId: string }) {
                     : l.Pivots.map((p) => `${p.PeerID}@${p.RemoteAddress}`).join(', ')}
                 </td>
                 <td>
-                  <button className="btn sm danger" onClick={() => stopListener(l.ID)}>
+                  <button type="button" className="btn sm danger" onClick={() => stopListener(l.ID)}>
                     {t('pivot.stop')}
                   </button>
                 </td>

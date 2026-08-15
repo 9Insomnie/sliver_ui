@@ -174,7 +174,7 @@ export default function WebsitesPage() {
           <div className="page-sub">{t('websites.sub', { count: websites.length })}</div>
         </div>
         <div className="toolbar">
-          <button className="btn" onClick={load}>
+          <button type="button" className="btn" onClick={load}>
             {t('common.refresh')}
           </button>
         </div>
@@ -208,10 +208,10 @@ export default function WebsitesPage() {
               </span>
             </div>
             <div className="toolbar">
-              <button className="btn" onClick={openAdd} disabled={detailLoading}>
+              <button type="button" className="btn" onClick={openAdd} disabled={detailLoading}>
                 {t('websites.addContent')}
               </button>
-              <button className="btn danger" onClick={() => setRemoving({ kind: 'site', siteName: selected.Name })}>
+              <button type="button" className="btn danger" onClick={() => setRemoving({ kind: 'site', siteName: selected.Name })}>
                 {t('websites.removeSite')}
               </button>
             </div>
@@ -236,16 +236,16 @@ export default function WebsitesPage() {
                     <td className="mono dim">{formatSize(c.Size)}</td>
                     <td>
                       <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
-                        <button className="btn sm" onClick={() => openView(c)}>
+                        <button type="button" className="btn sm" onClick={() => openView(c)}>
                           {t('websites.view')}
                         </button>
-                        <button className="btn sm" onClick={() => downloadContent(c)} disabled={!c.DataB64}>
+                        <button type="button" className="btn sm" onClick={() => downloadContent(c)} disabled={!c.DataB64}>
                           {t('websites.download')}
                         </button>
-                        <button className="btn sm" onClick={() => openEdit(c)}>
+                        <button type="button" className="btn sm" onClick={() => openEdit(c)}>
                           {t('websites.edit')}
                         </button>
-                        <button
+                        <button type="button"
                           className="btn sm danger"
                           onClick={() => setRemoving({ kind: 'content', siteName: selected.Name, content: c })}
                         >
@@ -350,10 +350,10 @@ function ContentEditor(props: {
       onClose={props.onClose}
       footer={
         <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn" onClick={props.onClose}>
+          <button type="button" className="btn" onClick={props.onClose}>
             {t('common.cancel')}
           </button>
-          <button className="btn primary" onClick={submit} disabled={props.busy || !path}>
+          <button type="button" className="btn primary" onClick={submit} disabled={props.busy || !path}>
             {props.busy ? t('common.working') : t('common.save')}
           </button>
         </div>

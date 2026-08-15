@@ -126,6 +126,17 @@ func LoadProfile(name string) (*ProfileConfig, error) {
 	return nil, fmt.Errorf("profile %q not found in %v", name, ConfigPaths())
 }
 
+// ParseProfile parses a sliver-client profile JSON document (the same format
+// found in ~/.sliver-client/configs/<name>.json) into a ProfileConfig. The
+// raw bytes come from a config file loaded by the UI, not from disk.
+func ParseProfile(data []byte) (*ProfileConfig, error) {
+	var cfg ProfileConfig
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("parse profile: %w", err)
+	}
+	return &cfg, nil
+}
+
 // tokenAuth attaches the operator bearer token to every gRPC request.
 type tokenAuth struct {
 	token string
