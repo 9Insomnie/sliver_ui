@@ -47,6 +47,12 @@ func TestEndpointsRequireClient(t *testing.T) {
 		{"stop listener", httptest.NewRequest(http.MethodDelete, "/api/listeners/1", nil)},
 		{"regenerate", httptest.NewRequest(http.MethodPost, "/api/regenerate", nil)},
 		{"loot list", httptest.NewRequest(http.MethodGet, "/api/loot", nil)},
+		{"reg delete key", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/reg/delete-key", nil)},
+		{"reconfigure", httptest.NewRequest(http.MethodPost, "/api/sessions/s-1/reconfigure", nil)},
+		{"beacon single", httptest.NewRequest(http.MethodGet, "/api/beacons/b-1", nil)},
+		{"loot add", httptest.NewRequest(http.MethodPost, "/api/loot", nil)},
+		{"loot rename", httptest.NewRequest(http.MethodPost, "/api/loot/l-1/rename", nil)},
+		{"compiler", httptest.NewRequest(http.MethodGet, "/api/compiler", nil)},
 	}
 
 	for _, tt := range tests {

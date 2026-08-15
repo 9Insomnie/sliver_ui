@@ -665,6 +665,26 @@ func (s *Server) handleRegCreateKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
+func (s *Server) handleRegDeleteKey(w http.ResponseWriter, r *http.Request) {
+	id, c := s.sessionID(w, r)
+	if c == nil {
+		return
+	}
+	var req struct {
+		Hive string `json:"hive"`
+		Path string `json:"path"`
+		Key  string `json:"key"`
+	}
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := c.RegistryDeleteKey(id, req.Hive, req.Path, req.Key); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
 // --- Port forwarding ---
 
 func (s *Server) handlePortfwdList(w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/bishopfox/sliver/protobuf/clientpb"
+	"github.com/bishopfox/sliver/protobuf/commonpb"
+	"github.com/bishopfox/sliver/protobuf/sliverpb"
 )
 
 // BeaconTaskView is the JSON shape of a beacon task.
@@ -94,4 +96,15 @@ func (c *Client) BeaconTaskContent(taskID string) (*BeaconTaskView, error) {
 		return nil, err
 	}
 	return beaconTaskToView(resp), nil
+}
+
+// ReconfigureSession changes the reconnect interval of a session (seconds).
+func (c *Client) ReconfigureSession(sessionID string, reconnectSeconds int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_, err := c.RPC.Reconfigure(ctx, &sliverpb.ReconfigureReq{
+		ReconnectInterval: reconnectSeconds,
+		Request:           &commonpb.Request{SessionID: sessionID},
+	})
+	return err
 }

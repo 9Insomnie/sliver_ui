@@ -115,12 +115,15 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}/reg/read", s.handleRegRead)
 	mux.HandleFunc("POST /api/sessions/{id}/reg/write", s.handleRegWrite)
 	mux.HandleFunc("POST /api/sessions/{id}/reg/create-key", s.handleRegCreateKey)
+	mux.HandleFunc("POST /api/sessions/{id}/reg/delete-key", s.handleRegDeleteKey)
+	mux.HandleFunc("POST /api/sessions/{id}/reconfigure", s.handleReconfigure)
 
 	mux.HandleFunc("GET /api/portfwd", s.handlePortfwdList)
 	mux.HandleFunc("POST /api/portfwd", s.handlePortfwdStart)
 	mux.HandleFunc("DELETE /api/portfwd/{port}", s.handlePortfwdStop)
 
 	mux.HandleFunc("GET /api/beacons", s.handleBeacons)
+	mux.HandleFunc("GET /api/beacons/{id}", s.handleBeacon)
 	mux.HandleFunc("POST /api/beacons/{id}/rename", s.handleRenameBeacon)
 	mux.HandleFunc("DELETE /api/beacons/{id}", s.handleRmBeacon)
 	mux.HandleFunc("GET /api/beacons/{id}/tasks", s.handleBeaconTasks)
@@ -133,12 +136,15 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("DELETE /api/implant-builds/{name}", s.handleDeleteImplantBuild)
 	mux.HandleFunc("POST /api/regenerate", s.handleRegenerate)
 	mux.HandleFunc("GET /api/operators", s.handleGetOperators)
+	mux.HandleFunc("GET /api/compiler", s.handleCompiler)
 
 	mux.HandleFunc("GET /api/socks", s.handleSocksList)
 	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
 	mux.HandleFunc("DELETE /api/socks/{id}", s.handleSocksStop)
 
 	mux.HandleFunc("GET /api/loot", s.handleLootAll)
+	mux.HandleFunc("POST /api/loot", s.handleLootAdd)
+	mux.HandleFunc("POST /api/loot/{id}/rename", s.handleLootRename)
 	mux.HandleFunc("GET /api/loot/{id}", s.handleLootContent)
 	mux.HandleFunc("DELETE /api/loot/{id}", s.handleLootRemove)
 	mux.HandleFunc("GET /api/jobs", s.handleJobs)

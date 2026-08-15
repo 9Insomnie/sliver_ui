@@ -70,6 +70,41 @@ func (s *Server) handleBeaconTasks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"tasks": tasks})
 }
 
+func (s *Server) handleBeacon(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	beacon, err := c.Beacon(r.PathValue("id"))
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if beacon == nil {
+		writeErr(w, http.StatusNotFound, "beacon not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, beacon)
+}
+
+func (s *Server) handleReconfigure(w http.ResponseWriter, r *http.Request) {
+	id, c := s.sessionID(w, r)
+	if c == nil {
+		return
+	}
+	var req struct {
+		ReconnectInterval int64 `json:"reconnect_interval"`
+	}
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := c.ReconfigureSession(id, req.ReconnectInterval); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
 func (s *Server) handleBeaconTaskContent(w http.ResponseWriter, r *http.Request) {
 	c := s.requireClient(w)
 	if c == nil {
@@ -128,6 +163,19 @@ func (s *Server) handleDeleteImplantProfile(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+func (s *Server) handleCompiler(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	compiler, err := c.CompilerInfo()
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, compiler)
 }
 
 // --- SOCKS5 proxies ---
@@ -192,12 +240,55 @@ func (s *Server) handleLootAll(w http.ResponseWriter, r *http.Request) {
 	if c == nil {
 		return
 	}
-	loot, err := c.LootAll()
+	var (
+		loot []sliver.LootView
+		err  error
+	)
+	if kind := r.URL.Query().Get("type"); kind != "" {
+		loot, err = c.LootAllOf(kind)
+	} else {
+		loot, err = c.LootAll()
+	}
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"loot": loot})
+}
+
+func (s *Server) handleLootAdd(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	var req sliver.LootAddRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	id, err := c.LootAdd(&req)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "id": id})
+}
+
+func (s *Server) handleLootRename(w http.ResponseWriter, r *http.Request) {
+	c := s.requireClient(w)
+	if c == nil {
+		return
+	}
+	var req struct {
+		Name string `json:"name"`
+	}
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := c.LootRename(r.PathValue("id"), req.Name); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
 func (s *Server) handleLootContent(w http.ResponseWriter, r *http.Request) {

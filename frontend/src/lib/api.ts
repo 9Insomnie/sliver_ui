@@ -19,6 +19,7 @@ import type {
   ServerInfo,
   OverviewData,
   LootEntry,
+  CompilerInfo,
 } from './types'
 
 const BASE = '/api'
@@ -50,6 +51,8 @@ export const api = {
   sessions: () => request<{ sessions: Session[] }>('/sessions'),
 
   beacons: () => request<{ beacons: Beacon[] }>('/beacons'),
+
+  beacon: (id: string) => request<Beacon>(`/beacons/${encodeURIComponent(id)}`),
 
   jobs: () => request<{ jobs: Job[] }>('/jobs'),
 
@@ -89,11 +92,31 @@ export const api = {
   beaconTaskContent: (beaconId: string, taskId: string) =>
     request<BeaconTask>(`/beacons/${beaconId}/tasks/${taskId}`),
 
-  lootList: () => request<{ loot: LootEntry[] }>('/loot'),
+  lootList: (type?: string) => {
+    const q = type ? `?type=${encodeURIComponent(type)}` : ''
+    return request<{ loot: LootEntry[] }>(`/loot${q}`)
+  },
 
   lootContent: (id: string) => request<LootEntry>(`/loot/${encodeURIComponent(id)}`),
 
   lootRemove: (id: string) => request<{ success: boolean }>(`/loot/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  lootAdd: (body: {
+    type: 'file' | 'credential'
+    name: string
+    file_name?: string
+    file_type?: 'text' | 'binary'
+    file_data_b64?: string
+    cred_user?: string
+    cred_password?: string
+    cred_api_key?: string
+  }) => request<{ success: boolean; id?: string }>('/loot', { method: 'POST', body: JSON.stringify(body) }),
+
+  lootRename: (id: string, name: string) =>
+    request<{ success: boolean }>(`/loot/${encodeURIComponent(id)}/rename`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
 
   implantProfiles: () => request<{ profiles: ImplantProfile[] }>('/implant-profiles'),
 
@@ -209,6 +232,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ hive, path, key, value, type: type || 'string' }),
     }),
+  regDeleteKey: (sessionId: string, hive: string, path: string, key: string) =>
+    request<{ success: boolean }>(`/sessions/${sessionId}/reg/delete-key`, {
+      method: 'POST',
+      body: JSON.stringify({ hive, path, key }),
+    }),
+
+  reconfigureSession: (sessionId: string, reconnectInterval: number) =>
+    request<{ success: boolean }>(`/sessions/${sessionId}/reconfigure`, {
+      method: 'POST',
+      body: JSON.stringify({ reconnect_interval: reconnectInterval }),
+    }),
 
   // --- Port forwarding ---
   portfwdList: () => request<{ forwards: PortForward[] }>('/portfwd'),
@@ -289,6 +323,8 @@ export const api = {
     }),
 
   getOperators: () => request<{ operators: { name: string; online: boolean }[] }>('/operators'),
+
+  compiler: () => request<CompilerInfo>('/compiler'),
 
   regCreateKey: (sessionId: string, hive: string, path: string, key: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/reg/create-key`, {
