@@ -10,8 +10,8 @@ export default function SettingsPage() {
   const [connected, setConnected] = useState(false)
   const [version, setVersion] = useState('')
   const [profileName, setProfileName] = useState('local')
-  const [lhost, setLhost] = useState('127.0.0.1')
-  const [lport, setLport] = useState(31337)
+  const [lhost, setLhost] = useState('')
+  const [lport, setLport] = useState(0)
   const [loadingProfiles, setLoadingProfiles] = useState(false)
   const { t } = useTranslation()
 
@@ -27,8 +27,8 @@ export default function SettingsPage() {
   const refreshInfo = async () => {
     try {
       const d = await api.info()
-      setConnected(true)
-      setVersion(d.version)
+      setConnected(!!d.connected)
+      setVersion(d.version || '')
     } catch (e) {
       setConnected(false)
       setVersion('')

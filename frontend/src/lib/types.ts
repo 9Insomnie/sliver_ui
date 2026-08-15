@@ -59,6 +59,18 @@ export interface ServerInfo {
   error?: string
 }
 
+export interface OverviewCounts {
+  sessions: number
+  beacons: number
+  jobs: number
+  builders: number
+  socks: number
+}
+
+export interface OverviewData {
+  counts: OverviewCounts
+}
+
 export interface ImplantConfig {
   name: string
   os: string
@@ -147,6 +159,7 @@ export interface GenerateResult {
   message: string
   path?: string
   name?: string
+  data?: string
 }
 
 export interface FileInfo {

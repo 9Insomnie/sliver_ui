@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
+import { base64ToBytes, triggerDownload } from '../lib/binary'
 import type { ImplantBuild, ImplantConfig, ImplantProfile } from '../lib/types'
 import './pages.css'
 
@@ -142,6 +143,9 @@ export default function ImplantsPage() {
     try {
       const cfg = buildConfig()
       const res = await api.generate(cfg)
+      if (res.success && res.data) {
+        triggerDownload(res.name || name, base64ToBytes(res.data))
+      }
       setMessage(
         res.success ? t('implants.generated', { msg: res.message }) : t('implants.failed', { msg: res.message }),
       )
@@ -150,6 +154,45 @@ export default function ImplantsPage() {
       setMessage(t('implants.failed', { msg: (e as Error).message }))
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const downloadBuild = async (b: ImplantBuild) => {
+    setMessage('')
+    try {
+      const res = await api.regenerate(b.Name)
+      if (res.data) {
+        triggerDownload(res.name || b.Name, base64ToBytes(res.data))
+      } else {
+        setMessage(t('implants.failed', { msg: 'no file data returned' }))
+      }
+    } catch (e) {
+      setMessage(t('implants.failed', { msg: (e as Error).message }))
+    }
+  }
+
+  const regenerateBuild = async (b: ImplantBuild) => {
+    setMessage('')
+    try {
+      const res = await api.regenerate(b.Name)
+      setMessage(
+        res.success ? t('implants.regenerated', { name: b.Name }) : t('implants.failed', { msg: res.message }),
+      )
+      load()
+    } catch (e) {
+      setMessage(t('implants.failed', { msg: (e as Error).message }))
+    }
+  }
+
+  const deleteBuild = async (b: ImplantBuild) => {
+    if (!window.confirm(t('implants.confirmDelete', { name: b.Name }))) return
+    setMessage('')
+    try {
+      await api.deleteImplantBuild(b.Name)
+      setMessage(t('implants.deleted', { name: b.Name }))
+      load()
+    } catch (e) {
+      setMessage(t('implants.failed', { msg: (e as Error).message }))
     }
   }
 
@@ -353,12 +396,13 @@ export default function ImplantsPage() {
               <th>{t('implants.thC2')}</th>
               <th>{t('implants.thInterval')}</th>
               <th>{t('implants.thObfuscated')}</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {builds.length === 0 && (
               <tr>
-                <td colSpan={6} className="empty">
+                <td colSpan={7} className="empty">
                   {t('implants.empty')}
                 </td>
               </tr>
@@ -379,6 +423,19 @@ export default function ImplantsPage() {
                   {b.ImplantConfig?.interval}s / {b.ImplantConfig?.jitter}%
                 </td>
                 <td>{b.ImplantConfig?.obfuscate ? t('common.yes') : t('common.no')}</td>
+                <td>
+                  <div className="fs-actions">
+                    <button className="btn sm" onClick={() => downloadBuild(b)}>
+                      {t('implants.download')}
+                    </button>
+                    <button className="btn sm" onClick={() => regenerateBuild(b)}>
+                      {t('implants.regenerate')}
+                    </button>
+                    <button className="btn sm danger" onClick={() => deleteBuild(b)}>
+                      {t('profiles.delete')}
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

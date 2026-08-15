@@ -4,6 +4,111 @@
   background: var(--bg);
 }
 
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ─── TopBar ──────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 48px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  min-width: 0;
+}
+
+.topbar-ws {
+  color: var(--text);
+  font-weight: 550;
+}
+
+.topbar-sep {
+  color: var(--text-tertiary);
+}
+
+.topbar-page {
+  color: var(--text-mute);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+.topbar-search:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+.topbar-search svg {
+  width: 13px;
+  height: 13px;
+}
+.topbar-search-label {
+  color: var(--text-mute);
+}
+
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  font-weight: 550;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.server-status.ok {
+  color: var(--green);
+}
+.server-status.bad {
+  color: var(--red);
+}
+.server-status .dot {
+  width: 7px;
+  height: 7px;
+}
+.server-status.ok .dot {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(76, 183, 130, 0.5);
+}
+.server-status.bad .dot {
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(229, 72, 77, 0.45);
+}
+
 /* ─── Sidebar ────────────────────────────────────────────────────
    240px 分两列:头部(logo + workspace 导航 + 分组标题 + favorites) + 底部
    (语言切换 + 连接状态)。与主区域仅靠 1px border 分割(背景同色)。 */
@@ -194,6 +299,39 @@ nav {
   white-space: nowrap;
 }
 
+/* 导航徽标 — 真实计数,高信息密度 */
+.nav-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--bg-active);
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.nav-item:hover .nav-badge,
+.nav-item.active .nav-badge {
+  background: var(--bg-selected);
+  color: var(--accent-bright);
+}
+
+.nav-item.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  padding: 5px 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-dim);
+}
+.nav-item.disabled .nav-icon {
+  color: var(--text-mute);
+}
+
 /* ─── Star toggle (收藏切换) ─────────────────────────────────────
    默认隐藏;nav-item hover 时显示半透明;已收藏时始终显示(黄色实心);
    toggle 自身 hover 时完全显示。用 span role=button 替代 button(避免嵌套)。 */
@@ -325,6 +463,7 @@ nav {
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  min-height: 0;
 }
 
 /* ─── 页面转场 ────────────────────────────────────────────────────

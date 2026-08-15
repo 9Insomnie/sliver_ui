@@ -1,180 +1,476 @@
 # Sliver UI
 
-为 [Sliver](https://github.com/BishopFox/sliver) C2 框架构建的图形化管理界面（桌面客户端形态的 Web 应用）。
+<p align="center">
+  <strong>A modern web interface for Sliver C2</strong>
+</p>
 
-## 架构
+<p align="center">
+  <a href="https://github.com/9Insomnie/sliver_ui">
+    <img src="https://img.shields.io/github/stars/9Insomnie/sliver_ui?style=flat-square" alt="GitHub Stars">
+  </a>
+  <a href="https://github.com/9Insomnie/sliver_ui/issues">
+    <img src="https://img.shields.io/github/issues/9Insomnie/sliver_ui?style=flat-square" alt="GitHub Issues">
+  </a>
+  <a href="https://github.com/9Insomnie/sliver_ui">
+    <img src="https://img.shields.io/github/last-commit/9Insomnie/sliver_ui?style=flat-square" alt="Last Commit">
+  </a>
+  <a href="https://github.com/9Insomnie/sliver_ui">
+    <img src="https://img.shields.io/github/license/9Insomnie/sliver_ui?style=flat-square" alt="License">
+  </a>
+</p>
 
+<p align="center">
+  A browser-based interface for interacting with and managing <a href="https://github.com/BishopFox/sliver">Sliver</a>.
+</p>
+
+---
+
+## Overview
+
+**Sliver UI** is a web-based interface built around the [Sliver C2 framework](https://github.com/BishopFox/sliver).
+
+Sliver is a powerful open-source adversary simulation and C2 framework. While its CLI provides extensive functionality, a graphical interface can make day-to-day operations easier to visualize and manage.
+
+Sliver UI aims to provide a clean and intuitive interface for authorized security assessments, red-team engagements, labs, CTFs, and security research.
+
+```text
+                         ┌──────────────────────┐
+                         │      Sliver UI       │
+                         │      Web Client      │
+                         └──────────┬───────────┘
+                                    │
+                                    │ API / RPC
+                                    ▼
+                         ┌──────────────────────┐
+                         │    Sliver Server     │
+                         │        C2            │
+                         └──────────┬───────────┘
+                                    │
+                  ┌─────────────────┼─────────────────┐
+                  │                 │                 │
+                  ▼                 ▼                 ▼
+             Implants           Sessions         Listeners
 ```
-+------------------------------------------+
-| React 前端 (Vite + xterm.js)              |
-|   Sessions / Beacons / Listeners /        |
-|   Implants / Events / Settings            |
-+--------------------+---------------------+
-                     | REST + WebSocket
-+--------------------+---------------------+
-| Go 后端 (gRPC 桥接层)                    |
-|   mTLS 连接 sliver-server (默认 31337)   |
-|   读取 ~/.sliver-client/configs 配置      |
-+--------------------+---------------------+
-                     | gRPC (mTLS)
-+--------------------+---------------------+
-|              sliver-server               |
-+------------------------------------------+
+
+## Features
+
+### Dashboard
+
+A centralized interface for viewing the current Sliver environment and its operational state.
+
+### Session Management
+
+Manage and inspect active Sliver sessions through a graphical interface.
+
+### Implant Management
+
+View and work with Sliver implants without relying exclusively on the command-line interface.
+
+### Listener Management
+
+Interact with the configured Sliver listeners from a unified web interface.
+
+### Web-based Workflow
+
+Access the management interface through a browser instead of maintaining multiple terminal sessions.
+
+### Sliver Integration
+
+Designed around the Sliver ecosystem rather than attempting to replace Sliver itself.
+
+---
+
+## Screenshots
+
+> Screenshots can be added here as the UI evolves.
+
+```text
+docs/
+└── screenshots/
+    ├── dashboard.png
+    ├── sessions.png
+    └── implants.png
 ```
 
-## 功能
+Example:
 
-- **Sessions**：在线会话列表（主机、用户、OS/Arch、传输方式、最后回连时间），一键打开交互终端
-- **Terminal**：基于 xterm.js + WebSocket 的交互式 shell（通过 Sliver 隧道）
-- **Session 详情**：按会话标签页管理以下能力：
-  - **Files**：目录浏览、进入/返回、新建目录、删除、上传、下载、查看文本文件（`Ls/Cd/Pwd/Mkdir/Rm/Upload/Download`）
-  - **Processes**：进程列表、结束进程（`Ps/Terminate`）
-  - **Network**：网络接口（`Ifconfig`）与连接表（`Netstat`）
-  - **Env**：查看 / 设置 / 删除环境变量（`GetEnv/SetEnv/UnsetEnv`）
-  - **Exec**：执行命令并查看 stdout/stderr/退出码（`Execute`）
-  - **Screenshot**：截取目标屏幕（`Screenshot`）
-  - **Portfwd**：本地端口 → 目标主机的端口转发（`Portfwd`）
-  - **Registry**（Windows）：按 hive/path 浏览注册表子键与值、读写值（`RegistryRead/Write/ListSubKeys/ListValues`）
-  - **Rename**：会话 / beacon 重命名（`Rename`）
-- **Beacons**：beacon 模式主机列表，支持重命名、删除（`RmBeacon`）、查看任务队列与任务内容（`GetBeaconTasks/GetBeaconTaskContent`）
-- **SOCKS5**：本地监听 → 会话隧道的 SOCKS5 代理（`CreateSocks/SocksProxy`，植入体端运行 SOCKS5 服务器）
-- **Implant Profiles**：将当前生成表单保存为 implant 配置模板，可复用 / 删除（`ImplantProfiles/SaveImplantProfile/DeleteImplantProfile`）
-- **Listeners**：启动/停止 mTLS、HTTP(S)、DNS、WireGuard 监听器
-- **Implants**：生成 implant（OS/Arch/格式/C2 配置/混淆选项），查看已构建产物
-- **Events**：服务器事件流
-- **Settings**：选择已保存的 sliver-client profile 连接服务器
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Sliver UI Dashboard" width="900">
+</p>
 
-## 快速开始
+---
 
-### 前提
+## Requirements
 
-- 一个运行中的 `sliver-server`
-- `~/.sliver-client/configs/` 下存在已保存的 profile（`sliver-client` 登录后自动生成）
-- Go `1.25.6+`（可由 `GOTOOLCHAIN=auto` 自动下载）
-- Node.js `20+` 与 npm `10+`
+Before running Sliver UI, make sure your environment provides the dependencies required by the project.
 
-Windows 上如使用火绒等安全软件，建议保持脚本中的 `GOTMPDIR=.gotmp` 配置，避免 `%TEMP%` 中生成的 Go 测试/构建二进制被拦截。
+Typical requirements include:
 
-### 运行
+- Node.js
+- npm / pnpm / yarn
+- A running Sliver server
+- Network connectivity between Sliver UI and the Sliver server
+
+Check the project's package configuration for the exact runtime versions supported by the current release.
+
+---
+
+## Installation
+
+### Clone the repository
 
 ```bash
-./start.sh
+git clone https://github.com/9Insomnie/sliver_ui.git
+cd sliver_ui
 ```
 
-Windows 可用：
+### Install dependencies
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start.ps1
-```
-
-或手动启动：
+Using npm:
 
 ```bash
-cd backend && go run . --addr 127.0.0.1:8080
-cd frontend && npm run dev
+npm install
 ```
 
-前端开发服务器运行在 `http://localhost:5173`，通过 Vite 反向代理将 `/api` 和 `/ws` 转发到后端 `:8080`。
-
-## 测试
-
-### 后端（Go 单元测试）
+Or using pnpm:
 
 ```bash
-cd backend && go test ./...
+pnpm install
 ```
 
-若本机安全软件拦截 `%TEMP%` 中的 Go 测试二进制，可改用项目内临时目录：
+### Configure the application
+
+If the project provides an environment template:
 
 ```bash
-mkdir -p ../.gotmp
-export GOTMPDIR="$PWD/../.gotmp"
-go test ./...
+cp .env.example .env
 ```
 
-覆盖 profile 加载（`ListProfiles`/`LoadProfile`）、连接参数校验、会话/beacon/事件视图转换、C2 URL 构建等纯逻辑。
-
-### 前端（Vitest + React Testing Library）
+Then edit the configuration:
 
 ```bash
-cd frontend && npm test
+nano .env
 ```
 
-覆盖 API client（fetch mock）与页面组件（SessionsPage 渲染/空态/错误态）。测试运行在 jsdom 环境，配置见 `vite.config.ts` 的 `test` 段。
+Configure the connection details required by your Sliver environment.
 
-## 打包为桌面客户端
+---
 
-本项目采用「Web 前端 + Go 桥接层」架构，可直接用以下任一方式打包为桌面应用：
+## Development
 
-- **Wails**：Go 后端原生支持，将前端构建产物嵌入 Wails 项目即可（需系统 WebView 依赖）
-- **Electron / Tauri**：加载前端构建产物或生产模式的静态服务地址
+Start the development server:
 
-## API
+```bash
+npm run dev
+```
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/info` | 连接状态与服务器版本 |
-| POST | `/api/connect` | 按 profile 连接 |
-| POST | `/api/disconnect` | 断开当前连接 |
-| GET | `/api/profiles` | 列出已保存配置 |
-| POST | `/api/profiles/:name` | 使用指定配置连接 |
-| GET | `/api/sessions` | 会话列表 |
-| GET | `/api/beacons` | beacon 列表 |
-| GET | `/api/jobs` | 监听器任务列表 |
-| POST | `/api/listeners` | 启动监听器 |
-| DELETE | `/api/listeners/:id` | 停止监听器 |
-| GET | `/api/builders` | implant 构建列表 |
-| POST | `/api/generate` | 生成 implant |
-| GET | `/api/events` | 事件流 |
-| WS | `/ws/sessions/:id/terminal` | 交互终端 |
-| GET | `/api/sessions/:id/fs` | 目录列表 |
-| GET | `/api/sessions/:id/fs/pwd` | 当前目录 |
-| POST | `/api/sessions/:id/fs/cd` | 切换目录 |
-| GET | `/api/sessions/:id/fs/cat` | 读取文本文件 |
-| GET | `/api/sessions/:id/fs/download` | 下载文件（base64） |
-| POST | `/api/sessions/:id/fs/upload` | 上传文件（base64） |
-| POST | `/api/sessions/:id/fs/mkdir` | 新建目录 |
-| DELETE | `/api/sessions/:id/fs?path=...&recursive=...` | 删除文件/目录 |
-| POST | `/api/sessions/:id/fs/mv` | 移动/重命名 |
-| GET | `/api/sessions/:id/ifconfig` | 网络接口 |
-| GET | `/api/sessions/:id/ps` | 进程列表 |
-| POST | `/api/sessions/:id/ps/kill` | 结束进程 |
-| POST | `/api/sessions/:id/kill` | 结束会话 |
-| GET | `/api/sessions/:id/netstat` | 连接表 |
-| GET | `/api/sessions/:id/env` | 环境变量 |
-| POST | `/api/sessions/:id/env` | 设置环境变量 |
-| DELETE | `/api/sessions/:id/env/:key` | 删除环境变量 |
-| POST | `/api/sessions/:id/exec` | 执行命令 |
-| GET | `/api/sessions/:id/screenshot` | 截屏 |
-| POST | `/api/sessions/:id/exec-assembly` | 执行 .NET assembly |
-| POST | `/api/sessions/:id/sideload` | 加载 DLL 到进程 |
-| POST | `/api/sessions/:id/spawn-dll` | 启动并加载 DLL |
-| POST | `/api/sessions/:id/migrate` | 迁移会话进程 |
-| POST | `/api/sessions/:id/process-dump` | 导出进程内存 |
-| POST | `/api/sessions/:id/impersonate` | 模拟指定用户 |
-| POST | `/api/sessions/:id/make-token` | 创建用户 token |
-| POST | `/api/sessions/:id/rev-to-self` | 恢复原始 token |
-| POST | `/api/sessions/:id/getsystem` | 提升为 SYSTEM 权限 |
-| POST | `/api/sessions/:id/ping` | 会话连通性测试 |
-| GET | `/api/portfwd` | 端口转发列表 |
-| POST | `/api/portfwd` | 启动端口转发 |
-| DELETE | `/api/portfwd/:port` | 停止端口转发 |
-| GET | `/api/sessions/:id/reg/subkeys` | 注册表子键 |
-| GET | `/api/sessions/:id/reg/values` | 注册表值 |
-| GET | `/api/sessions/:id/reg/read` | 读注册表值 |
-| POST | `/api/sessions/:id/reg/write` | 写注册表值 |
-| POST | `/api/sessions/:id/reg/create-key` | 新建注册表键 |
-| POST | `/api/sessions/:id/rename` | 重命名会话 |
-| POST | `/api/beacons/:id/rename` | 重命名 beacon |
-| DELETE | `/api/beacons/:id` | 删除 beacon |
-| GET | `/api/beacons/:id/tasks` | beacon 任务队列 |
-| GET | `/api/beacons/:id/tasks/:taskID` | beacon 任务内容 |
-| GET | `/api/implant-profiles` | implant 配置模板列表 |
-| POST | `/api/implant-profiles` | 保存 implant 配置模板 |
-| DELETE | `/api/implant-profiles/:name` | 删除 implant 配置模板 |
-| DELETE | `/api/implant-builds/:name` | 删除 implant 构建产物 |
-| POST | `/api/regenerate` | 重新生成 implant |
-| GET | `/api/operators` | 操作员列表 |
-| GET | `/api/socks` | SOCKS5 代理列表 |
-| POST | `/api/socks` | 启动 SOCKS5 代理 |
-| DELETE | `/api/socks/:id` | 停止 SOCKS5 代理 |
+The application should then be available through the development server URL printed by the application.
+
+For projects using pnpm:
+
+```bash
+pnpm dev
+```
+
+---
+
+## Production Build
+
+Build the application:
+
+```bash
+npm run build
+```
+
+Then start the production server:
+
+```bash
+npm run start
+```
+
+The exact production commands may vary depending on the framework and package scripts used by the current version.
+
+---
+
+## Configuration
+
+Configuration should be kept outside of the source code whenever possible.
+
+A typical deployment may require settings similar to:
+
+```env
+SLIVER_HOST=127.0.0.1
+SLIVER_PORT=31337
+```
+
+> The actual environment variables supported by the current version should be taken from the project's configuration files and `.env.example`.
+
+Never commit:
+
+- Sliver credentials
+- Private keys
+- Certificates
+- Operator configuration
+- C2 infrastructure details
+- Production secrets
+
+to a public repository.
+
+---
+
+## Usage
+
+A typical workflow looks like this:
+
+```text
+1. Start Sliver Server
+        │
+        ▼
+2. Start Sliver UI
+        │
+        ▼
+3. Open the Web Interface
+        │
+        ▼
+4. Connect to Sliver
+        │
+        ▼
+5. Manage Sessions / Implants / Listeners
+```
+
+Sliver UI is intended to complement the Sliver CLI rather than replace it.
+
+For advanced Sliver functionality, operators should continue to use the official Sliver client and documentation.
+
+---
+
+## Project Structure
+
+The project structure may change as development progresses. A typical layout is:
+
+```text
+sliver_ui/
+├── public/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   ├── hooks/
+│   └── ...
+├── package.json
+├── README.md
+└── ...
+```
+
+Refer to the repository itself for the authoritative project structure.
+
+---
+
+## Architecture
+
+Sliver UI follows a separation between the user interface and the Sliver infrastructure.
+
+```text
+┌─────────────────────────────────────────┐
+│                Browser                  │
+│                                         │
+│              Sliver UI                  │
+└────────────────────┬────────────────────┘
+                     │
+                     │ Application API
+                     ▼
+┌─────────────────────────────────────────┐
+│              UI Backend                 │
+│                                         │
+│  Authentication / API / Sliver Client   │
+└────────────────────┬────────────────────┘
+                     │
+                     │ RPC / API
+                     ▼
+┌─────────────────────────────────────────┐
+│             Sliver Server               │
+│                                         │
+│     C2 / Sessions / Implants / Jobs     │
+└─────────────────────────────────────────┘
+```
+
+This architecture allows the UI layer to evolve independently while keeping Sliver as the underlying C2 framework.
+
+---
+
+## Security
+
+Sliver UI is a security tool.
+
+It should only be deployed and used in environments where you have explicit authorization.
+
+Appropriate use cases include:
+
+- Authorized penetration testing
+- Red-team engagements
+- Adversary simulation
+- Security research
+- CTF competitions
+- Isolated security laboratories
+- Internal security testing
+
+Do **not** use this project to access, control, or compromise systems without authorization.
+
+### Deployment Recommendations
+
+For production or sensitive environments:
+
+- Do not expose the Sliver server directly to the public Internet.
+- Restrict access to the web interface.
+- Use HTTPS/TLS.
+- Use strong authentication.
+- Keep Sliver and its dependencies updated.
+- Store credentials and private keys securely.
+- Restrict network access using firewalls or VPNs.
+- Monitor access logs.
+- Do not expose management interfaces unnecessarily.
+
+---
+
+## Security Disclosure
+
+If you discover a security vulnerability in Sliver UI, please avoid publicly disclosing the issue before the maintainers have had an opportunity to investigate it.
+
+Open a private security report through GitHub's available security reporting mechanisms when possible.
+
+When reporting a vulnerability, include:
+
+- Affected component
+- Reproduction steps
+- Expected behavior
+- Actual behavior
+- Impact assessment
+- Relevant logs or screenshots
+- Suggested mitigation, if available
+
+Please do not include real-world target credentials, secrets, or sensitive infrastructure information in public issues.
+
+---
+
+## Responsible Use
+
+Sliver UI is developed for legitimate security operations and research.
+
+By using this project, you are responsible for ensuring that your activities comply with:
+
+- Applicable laws
+- Organizational policies
+- Rules of engagement
+- Scope restrictions
+- Authorization requirements
+
+The maintainers do not endorse unauthorized access, persistence, data theft, or disruption of systems.
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+Before opening a pull request:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Test the changes locally.
+5. Keep the pull request focused.
+6. Provide a clear description of the change.
+
+Example:
+
+```bash
+git checkout -b feature/my-feature
+
+git add .
+
+git commit -m "feat: add my feature"
+
+git push origin feature/my-feature
+```
+
+Then open a pull request against the main repository.
+
+---
+
+## Development Guidelines
+
+When contributing to Sliver UI:
+
+- Keep security-sensitive code easy to review.
+- Avoid hard-coded credentials.
+- Do not commit secrets.
+- Keep dependencies up to date.
+- Prefer small, focused changes.
+- Document non-obvious behavior.
+- Test changes before submitting a pull request.
+
+---
+
+## Related Projects
+
+### Sliver
+
+The underlying adversary simulation and C2 framework:
+
+https://github.com/BishopFox/sliver
+
+### Sliver UI
+
+This project:
+
+https://github.com/9Insomnie/sliver_ui
+
+---
+
+## Disclaimer
+
+Sliver UI is provided for authorized security testing, research, education, and adversary simulation.
+
+The software is provided **as-is**, without warranty of any kind.
+
+The maintainers and contributors are not responsible for:
+
+- Unauthorized use
+- Damage to systems or infrastructure
+- Data loss
+- Operational disruption
+- Misuse of the software
+- Violations of applicable laws or regulations
+
+Always obtain appropriate authorization before using Sliver UI against systems you do not own.
+
+---
+
+## License
+
+See the [`LICENSE`](LICENSE) file for the license applicable to this project.
+
+---
+
+## Acknowledgements
+
+Sliver UI would not exist without the work of the Sliver project and its contributors.
+
+Special thanks to the Sliver community for building and maintaining an open-source adversary simulation framework.
+
+**Sliver:**
+https://github.com/BishopFox/sliver
+
+---
+
+<p align="center">
+  <strong>Sliver UI</strong>
+  <br>
+  Web interface for Sliver C2
+</p>
+
+<p align="center">
+  <a href="https://github.com/9Insomnie/sliver_ui">GitHub</a>
+  ·
+  <a href="https://github.com/9Insomnie/sliver_ui/issues">Issues</a>
+</p>

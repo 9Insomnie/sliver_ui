@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { wsUrl } from '../lib/api'
+import { encodeFrame, decodeFrame, WS_MSG_DATA, WS_MSG_RESIZE, WS_MSG_CLOSE } from '../lib/terminal'
 import './pages.css'
 import './terminal.css'
 
@@ -37,13 +38,22 @@ export default function TerminalPage() {
     fitRef.current = fit
 
     const ws = new WebSocket(wsUrl(`/ws/sessions/${id}/terminal`))
+    ws.binaryType = 'arraybuffer'
     wsRef.current = ws
     ws.onopen = () => {
       setConnected(true)
       term.writeln(t('terminal.connectedMsg'))
+      sendResize()
     }
     ws.onmessage = (e) => {
-      term.write(e.data as string)
+      const frame = decodeFrame(e.data as ArrayBuffer)
+      if (!frame) return
+      if (frame.type === WS_MSG_DATA) {
+        term.write(frame.payload)
+      } else if (frame.type === WS_MSG_CLOSE) {
+        setConnected(false)
+        term.writeln(t('terminal.disconnectedMsg'))
+      }
     }
     ws.onclose = () => {
       setConnected(false)
@@ -52,28 +62,23 @@ export default function TerminalPage() {
     ws.onerror = () => term.writeln(t('terminal.errorMsg'))
 
     const onData = (data: string) => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(data)
+      if (ws.readyState === WebSocket.OPEN) ws.send(encodeFrame(WS_MSG_DATA, data))
     }
     term.onData(onData)
 
-    const onResize = () => {
+    const sendResize = () => {
       if (!fitRef.current || !termRef.current) return
       fitRef.current.fit()
       const term = termRef.current
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))
+        ws.send(encodeFrame(WS_MSG_RESIZE, JSON.stringify({ cols: term.cols, rows: term.rows })))
       }
     }
+
+    const onResize = sendResize
     window.addEventListener('resize', onResize)
 
-    const enter = () => {
-      if (!fitRef.current || !termRef.current) return
-      fitRef.current.fit()
-      const term = termRef.current
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }))
-      }
-    }
+    const enter = sendResize
     enter()
 
     return () => {

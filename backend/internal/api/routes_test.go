@@ -24,6 +24,10 @@ func TestRoutesAcceptDynamicResourceIDs(t *testing.T) {
 			req:  httptest.NewRequest(http.MethodGet, "/api/beacons/beacon-123/tasks", nil),
 		},
 		{
+			name: "overview",
+			req:  httptest.NewRequest(http.MethodGet, "/api/overview", nil),
+		},
+		{
 			name: "listener stop",
 			req:  httptest.NewRequest(http.MethodDelete, "/api/listeners/123", nil),
 		},

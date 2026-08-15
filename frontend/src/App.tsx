@@ -3,8 +3,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from './lib/api'
-import type { ServerInfo } from './lib/types'
-import { WORKSPACE_NAV, ICONS } from './lib/nav'
+import type { ServerInfo, OverviewCounts } from './lib/types'
+import { GROUPED_NAV, FAVORITES_NAV, ICONS } from './lib/nav'
+import DashboardPage from './pages/DashboardPage'
 import SessionsPage from './pages/SessionsPage'
 import SessionDetailPage from './pages/SessionDetailPage'
 import TerminalPage from './pages/TerminalPage'
@@ -18,18 +19,37 @@ import Logo from './components/Logo'
 import CommandPalette from './components/CommandPalette'
 import './App.css'
 
+const EMPTY_COUNTS: OverviewCounts = { sessions: 0, beacons: 0, jobs: 0, builders: 0, socks: 0 }
+
 export default function App() {
   const [info, setInfo] = useState<ServerInfo | null>(null)
+  const [counts, setCounts] = useState<OverviewCounts>(EMPTY_COUNTS)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
 
   useEffect(() => {
-    api
-      .info()
-      .then((d) => setInfo({ version: d.version, connected: true }))
-      .catch(() => setInfo({ version: '', connected: false }))
+    let cancelled = false
+    const refresh = async () => {
+      try {
+        const d = await api.info()
+        if (cancelled) return
+        setInfo({ version: d.version || '', connected: !!d.connected })
+        if (d.connected) {
+          const ov = await api.overview()
+          if (!cancelled) setCounts(ov.counts)
+        }
+      } catch {
+        if (!cancelled) setInfo({ version: '', connected: false })
+      }
+    }
+    refresh()
+    const timer = setInterval(refresh, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
   }, [])
 
   useEffect(() => {
@@ -84,18 +104,51 @@ export default function App() {
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     )
   }, [])
-  const favoriteItems = WORKSPACE_NAV.filter((item) => favorites.includes(item.key))
+  const favoriteItems = FAVORITES_NAV.filter((item) => favorites.includes(item.key))
 
-  const renderNavItem = (item: { path: string; key: string; icon: ReactNode; favorite?: boolean }) => {
+  const badgeFor = (key: string): number | null => {
+    switch (key) {
+      case 'sessions':
+        return counts.sessions
+      case 'beacons':
+        return counts.beacons
+      case 'listeners':
+        return counts.jobs
+      case 'jobs':
+        return counts.jobs
+      case 'implants':
+        return counts.builders
+      case 'socks':
+        return counts.socks
+      default:
+        return null
+    }
+  }
+
+  const renderNavItem = (item: { path: string; key: string; icon: ReactNode; favorite?: boolean; disabled?: boolean }) => {
     const isFav = favorites.includes(item.key)
+    const badge = badgeFor(item.key)
+    const active =
+      item.path === '/'
+        ? location.pathname === '/'
+        : location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+    if (item.disabled) {
+      return (
+        <div key={item.path + item.key} className="nav-item disabled">
+          <span className="nav-icon">{item.icon}</span>
+          <span className="nav-label">{t(`nav.${item.key}`)}</span>
+        </div>
+      )
+    }
     return (
       <button
         key={item.path + item.key}
-        className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+        className={`nav-item ${active ? 'active' : ''}`}
         onClick={() => navigate(item.path)}
       >
         <span className="nav-icon">{item.icon}</span>
         <span className="nav-label">{t(`nav.${item.key}`)}</span>
+        {badge !== null && badge > 0 && <span className="nav-badge mono">{badge}</span>}
         <span
           className={`star-toggle ${isFav ? 'active' : ''}`}
           role="button"
@@ -142,12 +195,12 @@ export default function App() {
         </button>
 
         <nav>
-          <div className="nav-section">
-            <div className="nav-section-title">
-              {t('app.workspace')}
+          {GROUPED_NAV.map((section) => (
+            <div className="nav-section" key={section.key}>
+              <div className="nav-section-title">{t(`nav.group.${section.key}`)}</div>
+              {section.items.map(renderNavItem)}
             </div>
-            {WORKSPACE_NAV.map(renderNavItem)}
-          </div>
+          ))}
 
           <div className="nav-section">
             <div className="nav-section-title">
@@ -163,10 +216,6 @@ export default function App() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="lang-switch" onClick={toggleLang} title={t('app.language')}>
-            {ICONS.globe}
-            {lang === 'zh' ? 'EN' : '中'}
-          </button>
           <div className="conn-status">
             <span className={`dot ${info?.connected ? 'ok' : 'bad'}`} />
             <span>
@@ -175,23 +224,54 @@ export default function App() {
                 : t('app.notConnected')}
             </span>
           </div>
+          <button className="lang-switch" onClick={toggleLang} title={t('app.language')}>
+            {ICONS.globe}
+            {lang === 'zh' ? 'EN' : '中'}
+          </button>
         </div>
       </aside>
-      <main className="content">
-        <div key={location.pathname} className={`page-transition ${pageDir}`}>
-          <Routes location={location}>
-            <Route path="/" element={<SessionsPage />} />
-            <Route path="/beacons" element={<BeaconsPage />} />
-            <Route path="/listeners" element={<ListenersPage />} />
-            <Route path="/implants" element={<ImplantsPage />} />
-            <Route path="/socks" element={<SocksPage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/sessions/:id" element={<SessionDetailPage />} />
-            <Route path="/sessions/:id/terminal" element={<TerminalPage />} />
-          </Routes>
-        </div>
-      </main>
+      <div className="main">
+        <header className="topbar">
+          <div className="topbar-breadcrumb">
+            <span className="topbar-ws">{t('app.workspace')}</span>
+            <span className="topbar-sep">/</span>
+            <span className="topbar-page">{t('app.title')}</span>
+          </div>
+          <div className="topbar-right">
+            <button
+              className="topbar-search"
+              onClick={() => setPaletteOpen(true)}
+              aria-label={t('app.search')}
+            >
+              {ICONS.search}
+              <span className="topbar-search-label">{t('app.search')}</span>
+              <kbd className="kbd">⌘K</kbd>
+            </button>
+            <div className={`server-status ${info?.connected ? 'ok' : 'bad'}`}>
+              <span className="dot ok" />
+              <span className="server-status-text">
+                {info?.connected ? t('status.connected') : t('status.disconnected')}
+              </span>
+            </div>
+          </div>
+        </header>
+        <main className="content">
+          <div key={location.pathname} className={`page-transition ${pageDir}`}>
+            <Routes location={location}>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/beacons" element={<BeaconsPage />} />
+              <Route path="/listeners" element={<ListenersPage />} />
+              <Route path="/implants" element={<ImplantsPage />} />
+              <Route path="/socks" element={<SocksPage />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/sessions/:id" element={<SessionDetailPage />} />
+              <Route path="/sessions/:id/terminal" element={<TerminalPage />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onToggleLang={toggleLang} />
     </div>
   )
