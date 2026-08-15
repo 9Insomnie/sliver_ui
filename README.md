@@ -12,465 +12,269 @@
     <img src="https://img.shields.io/github/issues/9Insomnie/sliver_ui?style=flat-square" alt="GitHub Issues">
   </a>
   <a href="https://github.com/9Insomnie/sliver_ui">
-    <img src="https://img.shields.io/github/last-commit/9Insomnie/sliver_ui?style=flat-square" alt="Last Commit">
+    <img src="https://img.shields.io/github/actions/workflow/status/9Insomnie/sliver_ui/ci.yml?style=flat-square" alt="CI">
   </a>
   <a href="https://github.com/9Insomnie/sliver_ui">
-    <img src="https://img.shields.io/github/license/9Insomnie/sliver_ui?style=flat-square" alt="License">
+    <img src="https://img.shields.io/github/last-commit/9Insomnie/sliver_ui?style=flat-square" alt="Last Commit">
   </a>
 </p>
 
-<p align="center">
-  A browser-based interface for interacting with and managing <a href="https://github.com/BishopFox/sliver">Sliver</a>.
-</p>
+A browser-based interface for interacting with and managing [Sliver](https://github.com/BishopFox/sliver) — the open-source adversary simulation and C2 framework.
 
 ---
 
 ## Overview
 
-**Sliver UI** is a web-based interface built around the [Sliver C2 framework](https://github.com/BishopFox/sliver).
+**Sliver UI** is a web console that speaks to a Sliver server over its gRPC API. It is built around the real Sliver RPC surface (`sessions`, `beacons`, `jobs`, `loot`, `implants`, `socks`, `portfwd`, etc.), so everything you see maps to an actual Sliver operation.
 
-Sliver is a powerful open-source adversary simulation and C2 framework. While its CLI provides extensive functionality, a graphical interface can make day-to-day operations easier to visualize and manage.
-
-Sliver UI aims to provide a clean and intuitive interface for authorized security assessments, red-team engagements, labs, CTFs, and security research.
+It is intended to **complement the Sliver CLI**, not replace it. Use it for authorized security assessments, red-team engagements, labs, CTFs, and security research.
 
 ```text
-                         ┌──────────────────────┐
-                         │      Sliver UI       │
-                         │      Web Client      │
-                         └──────────┬───────────┘
-                                    │
-                                    │ API / RPC
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Sliver Server     │
-                         │        C2            │
-                         └──────────┬───────────┘
-                                    │
-                  ┌─────────────────┼─────────────────┐
-                  │                 │                 │
-                  ▼                 ▼                 ▼
-             Implants           Sessions         Listeners
+             ┌──────────────────────┐
+             │       Browser        │
+             │   Sliver UI (React)  │
+             └──────────┬───────────┘
+                        │  HTTP API / WebSocket
+                        ▼
+             ┌──────────────────────┐
+             │   Go backend server  │
+             │  (single binary)     │
+             └──────────┬───────────┘
+                        │  gRPC (Sliver RPC)
+                        ▼
+             ┌──────────────────────┐
+             │     Sliver Server    │
+             │    C2 / Sessions     │
+             └──────────────────────┘
 ```
 
-## Features
-
-### Dashboard
-
-A centralized interface for viewing the current Sliver environment and its operational state.
-
-### Session Management
-
-Manage and inspect active Sliver sessions through a graphical interface.
-
-### Implant Management
-
-View and work with Sliver implants without relying exclusively on the command-line interface.
-
-### Listener Management
-
-Interact with the configured Sliver listeners from a unified web interface.
-
-### Web-based Workflow
-
-Access the management interface through a browser instead of maintaining multiple terminal sessions.
-
-### Sliver Integration
-
-Designed around the Sliver ecosystem rather than attempting to replace Sliver itself.
+The Go backend embeds the built frontend (`go:embed`), so production is a **single static binary** that serves both the UI and the API.
 
 ---
 
-## Screenshots
+## Features
 
-> Screenshots can be added here as the UI evolves.
+- **Dashboard** — live counts (sessions, beacons, jobs, builders, socks), active sessions, jobs and recent events, auto-refreshing.
+- **Sessions** — list, search, kill, rename, and a full detail view with tabs: Terminal (xterm.js + WebSocket), Execute, Files (browse/upload/download/mkdir/mv/rm), Processes (list/kill/migrate/dump), Network (ifconfig/netstat), Environment, Registry, Port Forwarding, Token Operations, Advanced Execution (sideload/spawn-dll/exec-assembly), Screenshot.
+- **Beacons** — list, rename, remove, and per-beacon task history with output.
+- **Listeners / Jobs** — start listeners (mtls/dns/wireguard/http/https), stop jobs.
+- **Implants** — implant profiles, build listing, regenerate, and profile management.
+- **SOCKS5 proxy** — per-session SOCKS proxies managed from the UI.
+- **Loot** — browse files/credentials, preview content.
+- **Files (host)** — host-side file management.
+- **Network / Processes** — standalone pages for netstat/ifconfig and process management.
+- **Events** — live event stream.
+- **Command palette** — `Ctrl+K`/`Ctrl+/` global search and navigation (pages, sessions, beacons, actions).
+- **Keyboard shortcuts** — per-list refresh/search shortcuts (`R`/`T`/`F`).
+- **i18n** — English and 简体中文, switchable from the sidebar.
+- **Single-binary production build** + multi-platform release assets.
+- **CI** — GitHub Actions runs frontend build/tests and backend vet/tests on every PR to `main`.
 
-```text
-docs/
-└── screenshots/
-    ├── dashboard.png
-    ├── sessions.png
-    └── implants.png
-```
+---
 
-Example:
+## Tech Stack
 
-<p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Sliver UI Dashboard" width="900">
-</p>
+| Layer     | Stack                                                              |
+| --------- | ------------------------------------------------------------------ |
+| Frontend  | React 18, TypeScript, Vite 5, react-router, i18next, xterm.js, Vitest + Testing Library |
+| Backend   | Go (`net/http` with method routing), WebSocket (terminal)          |
+| Sliver    | gRPC client (`github.com/bishopfox/sliver` v1.15.x RPC)            |
 
 ---
 
 ## Requirements
 
-Before running Sliver UI, make sure your environment provides the dependencies required by the project.
-
-Typical requirements include:
-
-- Node.js
-- npm / pnpm / yarn
-- A running Sliver server
-- Network connectivity between Sliver UI and the Sliver server
-
-Check the project's package configuration for the exact runtime versions supported by the current release.
+- **Go 1.25+** — backend.
+- **Node.js 20+ and npm** — frontend development only.
+- A running **Sliver server**.
+- Sliver client **profiles** (for the connection of your choice), typically in `~/.sliver-client/configs/<name>.json`.
 
 ---
 
-## Installation
+## Quick Start (development)
 
-### Clone the repository
+The frontend dev server proxies `/api` and `/ws` to the backend on `localhost:8080`, so run both:
+
+**Terminal 1 — backend**
 
 ```bash
-git clone https://github.com/9Insomnie/sliver_ui.git
-cd sliver_ui
+cd backend
+go run . --addr 0.0.0.0:8080
 ```
 
-### Install dependencies
-
-Using npm:
+**Terminal 2 — frontend**
 
 ```bash
+cd frontend
 npm install
-```
-
-Or using pnpm:
-
-```bash
-pnpm install
-```
-
-### Configure the application
-
-If the project provides an environment template:
-
-```bash
-cp .env.example .env
-```
-
-Then edit the configuration:
-
-```bash
-nano .env
-```
-
-Configure the connection details required by your Sliver environment.
-
----
-
-## Development
-
-Start the development server:
-
-```bash
 npm run dev
 ```
 
-The application should then be available through the development server URL printed by the application.
+Open the printed URL (default `http://localhost:5173`).
 
-For projects using pnpm:
+### One-command dev
 
 ```bash
-pnpm dev
+make dev            # macOS / Linux
+./start.ps1         # Windows PowerShell
+./start.sh          # POSIX shell
 ```
 
 ---
 
-## Production Build
-
-Build the application:
+## Production build (single binary)
 
 ```bash
-npm run build
+make build
+./sliver-ui --addr 0.0.0.0:8080
 ```
 
-Then start the production server:
+What `make build` does:
 
-```bash
-npm run start
-```
+1. `npm ci && npm run build` in `frontend/`.
+2. Copies `frontend/dist/*` into `backend/web/dist/`.
+3. `go build` the backend, embedding the frontend via `go:embed`.
 
-The exact production commands may vary depending on the framework and package scripts used by the current version.
+The resulting binary serves the UI at `/`, the API at `/api`, and the terminal WebSocket at `/ws` — nothing else to install or configure.
 
----
-
-## Configuration
-
-Configuration should be kept outside of the source code whenever possible.
-
-A typical deployment may require settings similar to:
-
-```env
-SLIVER_HOST=127.0.0.1
-SLIVER_PORT=31337
-```
-
-> The actual environment variables supported by the current version should be taken from the project's configuration files and `.env.example`.
-
-Never commit:
-
-- Sliver credentials
-- Private keys
-- Certificates
-- Operator configuration
-- C2 infrastructure details
-- Production secrets
-
-to a public repository.
-
----
-
-## Usage
-
-A typical workflow looks like this:
+Flags:
 
 ```text
-1. Start Sliver Server
-        │
-        ▼
-2. Start Sliver UI
-        │
-        ▼
-3. Open the Web Interface
-        │
-        ▼
-4. Connect to Sliver
-        │
-        ▼
-5. Manage Sessions / Implants / Listeners
+-addr "0.0.0.0:8080"   listen address
+-profile "<name>"      auto-connect to a sliver-client profile on startup
 ```
 
-Sliver UI is intended to complement the Sliver CLI rather than replace it.
+---
 
-For advanced Sliver functionality, operators should continue to use the official Sliver client and documentation.
+## Docker
+
+```bash
+docker build -t sliver-ui .
+docker run -p 8080:8080 sliver-ui
+```
+
+The image is a multi-stage build (Node → Go → Alpine runtime) and runs as a non-root user.
+
+---
+
+## Releases
+
+Tag a release to trigger the [release workflow](.github/workflows/release.yml):
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+It builds the single binary for `linux/amd64`, `linux/arm64`, `windows/amd64`, `darwin/amd64` and `darwin/arm64`, then uploads the assets to a GitHub Release.
+
+---
+
+## Tests
+
+```bash
+make test
+```
+
+or individually:
+
+```bash
+cd frontend && npm test        # Vitest (component + unit + i18n parity)
+cd backend  && go test ./...   # Go unit + handler tests
+cd backend  && go vet ./...
+```
 
 ---
 
 ## Project Structure
 
-The project structure may change as development progresses. A typical layout is:
-
 ```text
 sliver_ui/
-├── public/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── services/
-│   ├── hooks/
-│   └── ...
-├── package.json
-├── README.md
-└── ...
+├── .github/workflows/       # CI + release workflows
+├── backend/
+│   ├── main.go              # entrypoint (flags: -addr, -profile)
+│   ├── connect.go           # profile connection helper
+│   ├── internal/
+│   │   ├── api/             # HTTP handlers, terminal WS, static serving
+│   │   └── sliver/          # Sliver gRPC client + ops (files, socks, loot, ...)
+│   └── web/                 # embedded frontend (dist is populated at build time)
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # common + session tab components
+│   │   ├── pages/           # per-route pages
+│   │   ├── i18n/locales/    # en.ts, zh.ts
+│   │   └── lib/             # api client, types, connection state, terminal
+│   ├── package.json
+│   └── vite.config.ts
+├── Dockerfile
+├── Makefile
+└── start.ps1 / start.sh     # one-command dev scripts
 ```
-
-Refer to the repository itself for the authoritative project structure.
 
 ---
 
-## Architecture
+## Configuration & Connection
 
-Sliver UI follows a separation between the user interface and the Sliver infrastructure.
+Profiles are the same JSON files the Sliver client uses (`~/.sliver-client/configs/<name>.json`). Connect in the UI:
 
-```text
-┌─────────────────────────────────────────┐
-│                Browser                  │
-│                                         │
-│              Sliver UI                  │
-└────────────────────┬────────────────────┘
-                     │
-                     │ Application API
-                     ▼
-┌─────────────────────────────────────────┐
-│              UI Backend                 │
-│                                         │
-│  Authentication / API / Sliver Client   │
-└────────────────────┬────────────────────┘
-                     │
-                     │ RPC / API
-                     ▼
-┌─────────────────────────────────────────┐
-│             Sliver Server               │
-│                                         │
-│     C2 / Sessions / Implants / Jobs     │
-└─────────────────────────────────────────┘
-```
+- **Settings → Saved profiles** — pick a profile to connect immediately.
+- **Settings → Manual connection** — profile name + optional `LHost`/`LPort` overrides.
+- Or pass `--profile <name>` to the server to auto-connect at startup.
 
-This architecture allows the UI layer to evolve independently while keeping Sliver as the underlying C2 framework.
+State lives in memory; restarting Sliver UI reconnects through the UI or the `--profile` flag.
 
 ---
 
 ## Security
 
-Sliver UI is a security tool.
-
-It should only be deployed and used in environments where you have explicit authorization.
-
-Appropriate use cases include:
-
-- Authorized penetration testing
-- Red-team engagements
-- Adversary simulation
-- Security research
-- CTF competitions
-- Isolated security laboratories
-- Internal security testing
-
-Do **not** use this project to access, control, or compromise systems without authorization.
-
-### Deployment Recommendations
+Sliver UI is a security tool. **Deploy and use it only where you have explicit authorization** — authorized penetration testing, red-team engagements, adversary simulation, research, CTFs, isolated labs, and internal testing.
 
 For production or sensitive environments:
 
 - Do not expose the Sliver server directly to the public Internet.
-- Restrict access to the web interface.
-- Use HTTPS/TLS.
-- Use strong authentication.
+- Restrict access to the web interface (VPN / firewall / SSO).
+- Use HTTPS/TLS in front of the UI.
 - Keep Sliver and its dependencies updated.
-- Store credentials and private keys securely.
-- Restrict network access using firewalls or VPNs.
-- Monitor access logs.
-- Do not expose management interfaces unnecessarily.
+- Never commit credentials, private keys, certificates, operator configs, or infrastructure details to the repository.
 
----
+### Security Disclosure
 
-## Security Disclosure
-
-If you discover a security vulnerability in Sliver UI, please avoid publicly disclosing the issue before the maintainers have had an opportunity to investigate it.
-
-Open a private security report through GitHub's available security reporting mechanisms when possible.
-
-When reporting a vulnerability, include:
-
-- Affected component
-- Reproduction steps
-- Expected behavior
-- Actual behavior
-- Impact assessment
-- Relevant logs or screenshots
-- Suggested mitigation, if available
-
-Please do not include real-world target credentials, secrets, or sensitive infrastructure information in public issues.
+To report a vulnerability, prefer GitHub's private security reporting. Include the affected component, reproduction steps, expected vs. actual behavior, impact, and any suggested mitigation. Do not include real-world credentials or infrastructure details.
 
 ---
 
 ## Responsible Use
 
-Sliver UI is developed for legitimate security operations and research.
-
-By using this project, you are responsible for ensuring that your activities comply with:
-
-- Applicable laws
-- Organizational policies
-- Rules of engagement
-- Scope restrictions
-- Authorization requirements
-
-The maintainers do not endorse unauthorized access, persistence, data theft, or disruption of systems.
+By using this project you are responsible for ensuring your activities comply with applicable laws, organizational policies, rules of engagement, and authorization requirements. The maintainers do not endorse unauthorized access, persistence, data theft, or disruption of systems.
 
 ---
 
 ## Contributing
 
-Contributions are welcome.
-
-Before opening a pull request:
-
 1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Test the changes locally.
-5. Keep the pull request focused.
-6. Provide a clear description of the change.
+2. Create a feature branch (`git checkout -b feature/foo`).
+3. Make changes and test them (`make test`).
+4. Keep the pull request focused and well-described.
 
-Example:
-
-```bash
-git checkout -b feature/my-feature
-
-git add .
-
-git commit -m "feat: add my feature"
-
-git push origin feature/my-feature
-```
-
-Then open a pull request against the main repository.
-
----
-
-## Development Guidelines
-
-When contributing to Sliver UI:
-
-- Keep security-sensitive code easy to review.
-- Avoid hard-coded credentials.
-- Do not commit secrets.
-- Keep dependencies up to date.
-- Prefer small, focused changes.
-- Document non-obvious behavior.
-- Test changes before submitting a pull request.
+Rulesets on `main` require changes to land via a pull request; force-pushes to `main` are blocked.
 
 ---
 
 ## Related Projects
 
-### Sliver
-
-The underlying adversary simulation and C2 framework:
-
-https://github.com/BishopFox/sliver
-
-### Sliver UI
-
-This project:
-
-https://github.com/9Insomnie/sliver_ui
+- [Sliver](https://github.com/BishopFox/sliver) — the underlying adversary simulation and C2 framework.
+- [Sliver UI](https://github.com/9Insomnie/sliver_ui) — this project.
 
 ---
 
 ## Disclaimer
 
-Sliver UI is provided for authorized security testing, research, education, and adversary simulation.
-
-The software is provided **as-is**, without warranty of any kind.
-
-The maintainers and contributors are not responsible for:
-
-- Unauthorized use
-- Damage to systems or infrastructure
-- Data loss
-- Operational disruption
-- Misuse of the software
-- Violations of applicable laws or regulations
-
-Always obtain appropriate authorization before using Sliver UI against systems you do not own.
-
----
-
-## License
-
-See the [`LICENSE`](LICENSE) file for the license applicable to this project.
+Sliver UI is provided for authorized security testing, research, education, and adversary simulation, **as-is**, without warranty of any kind. The maintainers and contributors are not responsible for unauthorized use, damage to systems, data loss, operational disruption, or violations of applicable laws. Always obtain appropriate authorization before use.
 
 ---
 
 ## Acknowledgements
 
-Sliver UI would not exist without the work of the Sliver project and its contributors.
+Sliver UI would not exist without the Sliver project and its contributors.
 
-Special thanks to the Sliver community for building and maintaining an open-source adversary simulation framework.
-
-**Sliver:**
-https://github.com/BishopFox/sliver
-
----
-
-<p align="center">
-  <strong>Sliver UI</strong>
-  <br>
-  Web interface for Sliver C2
-</p>
-
-<p align="center">
-  <a href="https://github.com/9Insomnie/sliver_ui">GitHub</a>
-  ·
-  <a href="https://github.com/9Insomnie/sliver_ui/issues">Issues</a>
-</p>
+**Sliver:** https://github.com/BishopFox/sliver
