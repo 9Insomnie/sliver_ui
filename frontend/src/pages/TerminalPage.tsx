@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { wsUrl } from '../lib/api'
-import { encodeFrame, decodeFrame, WS_MSG_DATA, WS_MSG_RESIZE, WS_MSG_CLOSE } from '../lib/terminal'
+import { encodeFrame, decodeFrame, translateInput, WS_MSG_DATA, WS_MSG_RESIZE, WS_MSG_CLOSE } from '../lib/terminal'
 import './pages.css'
 import './terminal.css'
 
@@ -76,7 +76,7 @@ export default function TerminalPage() {
 
     const onData = (data: string) => {
       if (!wsClosed && ws.readyState === WebSocket.OPEN)
-        ws.send(encodeFrame(WS_MSG_DATA, data))
+        ws.send(encodeFrame(WS_MSG_DATA, translateInput(data)))
     }
     term.onData(onData)
 

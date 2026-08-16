@@ -19,9 +19,9 @@ export default function JobsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.jobs()
       setJobs(data.jobs || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -38,12 +38,8 @@ export default function JobsPage() {
   const stop = async (j: Job) => {
     setBusy(true)
     try {
-      const res = await api.stopListener(j.ID)
-      if (res.error) {
-        toast.push('error', `${t('common.failed')}: ${res.error}`)
-      } else {
-        toast.push('success', t('listeners.stopped', { id: j.ID }))
-      }
+      await api.stopListener(j.ID)
+      toast.push('success', t('listeners.stopped', { id: j.ID }))
       setStopping(null)
       load()
     } catch (e) {

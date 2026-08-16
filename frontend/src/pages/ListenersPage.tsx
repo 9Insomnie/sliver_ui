@@ -23,9 +23,9 @@ export default function ListenersPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.jobs()
       setJobs(data.jobs || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     }
@@ -40,9 +40,8 @@ export default function ListenersPage() {
   const start = async () => {
     setStarting(true)
     try {
-      const res = await api.startListener({ type, addr, port: Number(port), tls })
-      if (res.error) toast.push('error', `${t('common.failed')}: ${res.error}`)
-      else toast.push('success', t('listeners.started'))
+      await api.startListener({ type, addr, port: Number(port), tls })
+      toast.push('success', t('listeners.started'))
       load()
     } catch (e) {
       toast.push('error', `${t('common.failed')}: ${(e as Error).message}`)
@@ -54,9 +53,8 @@ export default function ListenersPage() {
   const stop = async (j: Job) => {
     setBusy(true)
     try {
-      const res = await api.stopListener(j.ID)
-      if (res.error) toast.push('error', `${t('common.failed')}: ${res.error}`)
-      else toast.push('success', t('listeners.stopped', { id: j.ID }))
+      await api.stopListener(j.ID)
+      toast.push('success', t('listeners.stopped', { id: j.ID }))
       setStopping(null)
       load()
     } catch (e) {

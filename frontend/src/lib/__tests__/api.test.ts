@@ -46,6 +46,11 @@ describe('api client', () => {
     await expect(api.sessions()).rejects.toThrow('boom')
   })
 
+  it('throws on a 2xx body carrying an error field', async () => {
+    mockFetch(200, { error: 'profile not found' })
+    await expect(api.useProfile('x')).rejects.toThrow('profile not found')
+  })
+
   it('connect() POSTs config content as JSON', async () => {
     const fn = mockFetch(200, { success: true })
     const content = JSON.stringify({ operator: 'local', lhost: '127.0.0.1', lport: 31337 })

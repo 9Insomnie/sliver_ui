@@ -30,9 +30,9 @@ export default function EventsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.events()
       setEvents(data.events || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

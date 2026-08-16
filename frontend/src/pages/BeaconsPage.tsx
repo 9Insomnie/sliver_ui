@@ -57,9 +57,9 @@ export default function BeaconsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.beacons()
       setBeacons(data.beacons || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

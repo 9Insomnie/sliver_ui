@@ -19,9 +19,9 @@ export default function HostsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const d = await api.hosts()
       setHosts(d.hosts || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

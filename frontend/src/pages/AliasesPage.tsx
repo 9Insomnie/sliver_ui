@@ -48,10 +48,10 @@ export default function AliasesPage() {
 
   const load = async () => {
     try {
-      setError('')
       const [a, s] = await Promise.all([api.aliases(), api.sessions()])
       setAliases(a.aliases || [])
       setSessions(s.sessions || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

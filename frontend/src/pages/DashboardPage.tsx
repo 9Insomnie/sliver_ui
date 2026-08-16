@@ -46,7 +46,6 @@ export default function DashboardPage() {
       setEvents([])
       return
     }
-    setError('')
     try {
       const [ss, js, bs] = await Promise.all([api.sessions(), api.jobs(), api.beacons()])
       setSessions(ss.sessions || [])
@@ -58,6 +57,7 @@ export default function DashboardPage() {
       } catch {
         // Recent activity is auxiliary; a failure must not break the overview.
       }
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     }

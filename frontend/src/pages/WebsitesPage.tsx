@@ -117,10 +117,10 @@ export default function WebsitesPage() {
         file_data_b64: fileDataB64 || undefined,
         text: fileDataB64 ? undefined : text,
       }
-      const updated =
-        selected.Contents[path] || editing
-          ? await api.websiteUpdateContent(selected.Name, body)
-          : await api.websiteAddContent(selected.Name, body)
+      const exists = Boolean(selected.Contents[path])
+      const updated = exists
+        ? await api.websiteUpdateContent(selected.Name, body)
+        : await api.websiteAddContent(selected.Name, body)
       setSelected(updated)
       setShowAdd(false)
       await load()
