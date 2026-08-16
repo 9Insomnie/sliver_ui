@@ -20,10 +20,10 @@ export default function SocksPage() {
   const [password, setPassword] = useState('')
 
   const load = useCallback(async () => {
-    setError('')
     try {
       const d = await api.socksList()
       setProxies(d.proxies || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

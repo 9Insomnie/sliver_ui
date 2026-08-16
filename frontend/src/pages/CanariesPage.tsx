@@ -16,9 +16,9 @@ export default function CanariesPage() {
 
   const load = async () => {
     try {
-      setError('')
       const d = await api.canaries()
       setCanaries(d.canaries || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

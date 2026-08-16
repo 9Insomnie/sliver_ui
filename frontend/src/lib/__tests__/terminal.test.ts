@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { encodeFrame, decodeFrame, WS_MSG_DATA, WS_MSG_RESIZE } from '../terminal'
+import { encodeFrame, decodeFrame, translateInput, WS_MSG_DATA, WS_MSG_RESIZE } from '../terminal'
 
 describe('terminal frame protocol', () => {
   it('encodes data frames as [type][4-byte BE length][payload]', () => {
@@ -31,5 +31,24 @@ describe('terminal frame protocol', () => {
     const buf = encodeFrame(WS_MSG_DATA, 'hello')
     const truncated = buf.slice(0, 3)
     expect(decodeFrame(truncated)).toBeNull()
+  })
+})
+
+describe('translateInput', () => {
+  it('maps DEL (0x7f) backspace to BS (0x08) so Windows shells edit correctly', () => {
+    expect(translateInput('abc\x7f')).toBe('abc\x08')
+  })
+
+  it('leaves ordinary input unchanged', () => {
+    expect(translateInput('ls -la\r')).toBe('ls -la\r')
+    expect(translateInput('你好')).toBe('你好')
+  })
+
+  it('translates every DEL in the burst', () => {
+    expect(translateInput('\x7f\x7f\x7f')).toBe('\x08\x08\x08')
+  })
+
+  it('does not double-translate existing BS bytes', () => {
+    expect(translateInput('ab\x08\x7f')).toBe('ab\x08\x08')
   })
 })

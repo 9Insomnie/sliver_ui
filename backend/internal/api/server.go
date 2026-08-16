@@ -1,8 +1,11 @@
 package api
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -65,149 +68,175 @@ func (s *Server) requireClient(w http.ResponseWriter) *sliver.Client {
 	return c
 }
 
+// route is a single HTTP handler registration.
+type route struct {
+	method  string
+	pattern string
+	handler http.HandlerFunc
+}
+
+// RoutePattern is the machine-readable contract for a registered route. The
+// frontend contract test (frontend/src/lib/__tests__/routes.test.ts) compares
+// every path the UI calls through api.ts against RoutePatterns(), so a path
+// renamed here (or in api.ts) fails CI instead of silently 404ing.
+type RoutePattern struct {
+	Method  string `json:"method"`
+	Pattern string `json:"pattern"`
+}
+
+// apiRoutes is the single source of truth for the /api handlers: Routes()
+// registers them and RoutePatterns() exports them, so the two cannot drift.
+func (s *Server) apiRoutes() []route {
+	return []route{
+		{"GET", "/api/info", s.handleInfo},
+		{"GET", "/api/overview", s.handleOverview},
+		{"POST", "/api/connect", s.handleConnect},
+		{"POST", "/api/disconnect", s.handleDisconnect},
+		{"GET", "/api/profiles", s.handleListProfiles},
+		{"POST", "/api/profiles/{name}", s.handleUseProfile},
+
+		{"GET", "/api/sessions", s.handleSessions},
+		{"POST", "/api/sessions/{id}/kill", s.handleKillSession},
+		{"GET", "/api/sessions/{id}/fs", s.handleFsList},
+		{"GET", "/api/sessions/{id}/fs/pwd", s.handleFsPwd},
+		{"POST", "/api/sessions/{id}/fs/cd", s.handleFsCd},
+		{"GET", "/api/sessions/{id}/fs/cat", s.handleFsCat},
+		{"GET", "/api/sessions/{id}/fs/download", s.handleFsDownload},
+		{"POST", "/api/sessions/{id}/fs/upload", s.handleFsUpload},
+		{"POST", "/api/sessions/{id}/fs/mkdir", s.handleFsMkdir},
+		{"DELETE", "/api/sessions/{id}/fs", s.handleFsRm},
+		{"POST", "/api/sessions/{id}/fs/mv", s.handleFsMv},
+
+		{"GET", "/api/sessions/{id}/ifconfig", s.handleIfconfig},
+		{"GET", "/api/sessions/{id}/ps", s.handlePs},
+		{"POST", "/api/sessions/{id}/ps/kill", s.handleKillProcess},
+		{"GET", "/api/sessions/{id}/netstat", s.handleNetstat},
+		{"GET", "/api/sessions/{id}/env", s.handleGetEnv},
+		{"POST", "/api/sessions/{id}/env", s.handleSetEnv},
+		{"DELETE", "/api/sessions/{id}/env/{key}", s.handleUnsetEnv},
+		{"POST", "/api/sessions/{id}/exec", s.handleExec},
+		{"GET", "/api/sessions/{id}/screenshot", s.handleScreenshot},
+
+		// Extended session operations (P1)
+		{"POST", "/api/sessions/{id}/exec-assembly", s.handleExecAssembly},
+		{"POST", "/api/sessions/{id}/sideload", s.handleSideload},
+		{"POST", "/api/sessions/{id}/spawn-dll", s.handleSpawnDll},
+		{"POST", "/api/sessions/{id}/migrate", s.handleMigrate},
+		{"POST", "/api/sessions/{id}/process-dump", s.handleProcessDump},
+		{"POST", "/api/sessions/{id}/impersonate", s.handleImpersonate},
+		{"POST", "/api/sessions/{id}/make-token", s.handleMakeToken},
+		{"POST", "/api/sessions/{id}/rev-to-self", s.handleRevToSelf},
+		{"POST", "/api/sessions/{id}/getsystem", s.handleGetSystem},
+		{"GET", "/api/sessions/{id}/privs", s.handleGetPrivs},
+		{"GET", "/api/sessions/{id}/token-owner", s.handleCurrentTokenOwner},
+		{"POST", "/api/sessions/{id}/execute-token", s.handleExecuteToken},
+		{"POST", "/api/sessions/{id}/runas", s.handleRunAs},
+		{"GET", "/api/pivots/graph", s.handlePivotGraph},
+		{"GET", "/api/sessions/{id}/pivots/listeners", s.handlePivotListeners},
+		{"POST", "/api/sessions/{id}/pivots/listeners", s.handlePivotStartListener},
+		{"DELETE", "/api/sessions/{id}/pivots/listeners/{pivotID}", s.handlePivotStopListener},
+		{"POST", "/api/sessions/{id}/services", s.handleStartService},
+		{"POST", "/api/sessions/{id}/services/stop", s.handleStopService},
+		{"POST", "/api/sessions/{id}/services/remove", s.handleRemoveService},
+		{"POST", "/api/sessions/{id}/ssh", s.handleRunSSHCommand},
+		{"GET", "/api/sessions/{id}/extensions", s.handleListExtensions},
+		{"POST", "/api/sessions/{id}/extensions/register", s.handleRegisterExtension},
+		{"POST", "/api/sessions/{id}/extensions/call", s.handleCallExtension},
+		{"POST", "/api/sessions/{id}/msf", s.handleMsf},
+		{"POST", "/api/sessions/{id}/msf/remote", s.handleMsfRemote},
+		{"POST", "/api/msf/stage", s.handleMsfStage},
+		{"POST", "/api/sessions/{id}/backdoor", s.handleBackdoor},
+		{"POST", "/api/sessions/{id}/dll-hijack", s.handleHijackDLL},
+		{"POST", "/api/shellcode/rdi", s.handleShellcodeRDI},
+		{"POST", "/api/sessions/{id}/exec-shellcode", s.handleExecuteShellcode},
+		{"POST", "/api/sessions/{id}/psexec", s.handlePsExec},
+		{"POST", "/api/sessions/{id}/ping", s.handlePing},
+
+		{"GET", "/api/sessions/{id}/reg/subkeys", s.handleRegSubKeys},
+		{"GET", "/api/sessions/{id}/reg/values", s.handleRegValues},
+		{"GET", "/api/sessions/{id}/reg/read", s.handleRegRead},
+		{"POST", "/api/sessions/{id}/reg/write", s.handleRegWrite},
+		{"POST", "/api/sessions/{id}/reg/create-key", s.handleRegCreateKey},
+		{"POST", "/api/sessions/{id}/reg/delete-key", s.handleRegDeleteKey},
+		{"POST", "/api/sessions/{id}/reconfigure", s.handleReconfigure},
+		{"POST", "/api/sessions/{id}/close", s.handleCloseSession},
+		{"POST", "/api/monitor/start", s.handleMonitorStart},
+		{"POST", "/api/monitor/stop", s.handleMonitorStop},
+		{"POST", "/api/beacons/{id}/open-session", s.handleOpenSession},
+
+		{"GET", "/api/portfwd", s.handlePortfwdList},
+		{"POST", "/api/portfwd", s.handlePortfwdStart},
+		{"DELETE", "/api/portfwd/{port}", s.handlePortfwdStop},
+
+		{"POST", "/api/beacons/prune", s.handlePruneBeacons},
+		{"POST", "/api/sessions/prune", s.handlePruneSessions},
+		{"GET", "/api/aliases", s.handleAliases},
+		{"POST", "/api/aliases", s.handleAliasInstall},
+		{"DELETE", "/api/aliases/{name}", s.handleAliasRemove},
+		{"POST", "/api/sessions/{id}/aliases/{name}/run", s.handleAliasRun},
+
+		{"GET", "/api/beacons", s.handleBeacons},
+		{"GET", "/api/beacons/{id}", s.handleBeacon},
+		{"POST", "/api/beacons/{id}/rename", s.handleRenameBeacon},
+		{"DELETE", "/api/beacons/{id}", s.handleRmBeacon},
+		{"GET", "/api/beacons/{id}/tasks", s.handleBeaconTasks},
+		{"GET", "/api/beacons/{id}/tasks/{taskID}", s.handleBeaconTaskContent},
+		{"POST", "/api/sessions/{id}/rename", s.handleRenameSession},
+
+		{"GET", "/api/implant-profiles", s.handleImplantProfiles},
+		{"POST", "/api/implant-profiles", s.handleSaveImplantProfile},
+		{"DELETE", "/api/implant-profiles/{name}", s.handleDeleteImplantProfile},
+		{"DELETE", "/api/implant-builds/{name}", s.handleDeleteImplantBuild},
+		{"POST", "/api/regenerate", s.handleRegenerate},
+		{"GET", "/api/operators", s.handleGetOperators},
+		{"GET", "/api/compiler", s.handleCompiler},
+		{"GET", "/api/hosts", s.handleHosts},
+		{"GET", "/api/hosts/{uuid}", s.handleHost},
+		{"DELETE", "/api/hosts/{uuid}", s.handleHostRm},
+		{"DELETE", "/api/hosts/{uuid}/iocs/{iocID}", s.handleHostIOCRm},
+
+		{"GET", "/api/websites", s.handleWebsites},
+		{"GET", "/api/websites/{name}", s.handleWebsite},
+		{"POST", "/api/websites/{name}/content", s.handleWebsiteAddContent},
+		{"PUT", "/api/websites/{name}/content", s.handleWebsiteUpdateContent},
+		{"DELETE", "/api/websites/{name}/content", s.handleWebsiteRemoveContent},
+		{"DELETE", "/api/websites/{name}", s.handleWebsiteRemove},
+		{"GET", "/api/canaries", s.handleCanaries},
+
+		{"GET", "/api/wg/config", s.handleWGClientConfig},
+		{"GET", "/api/wg/ip", s.handleWGUniqueIP},
+		{"GET", "/api/sessions/{id}/wg/forwarders", s.handleWGForwarders},
+		{"POST", "/api/sessions/{id}/wg/forwarders", s.handleWGStartPortForward},
+		{"DELETE", "/api/sessions/{id}/wg/forwarders/{fwdID}", s.handleWGStopPortForward},
+		{"GET", "/api/sessions/{id}/wg/socks", s.handleWGSocksServers},
+		{"POST", "/api/sessions/{id}/wg/socks", s.handleWGStartSocks},
+		{"DELETE", "/api/sessions/{id}/wg/socks/{serverID}", s.handleWGStopSocks},
+
+		{"GET", "/api/socks", s.handleSocksList},
+		{"POST", "/api/socks", s.handleSocksStart},
+		{"DELETE", "/api/socks/{id}", s.handleSocksStop},
+
+		{"GET", "/api/loot", s.handleLootAll},
+		{"POST", "/api/loot", s.handleLootAdd},
+		{"POST", "/api/loot/{id}/rename", s.handleLootRename},
+		{"GET", "/api/loot/{id}", s.handleLootContent},
+		{"DELETE", "/api/loot/{id}", s.handleLootRemove},
+		{"GET", "/api/jobs", s.handleJobs},
+		{"GET", "/api/events", s.handleEvents},
+		{"GET", "/api/builders", s.handleBuilders},
+		{"POST", "/api/generate", s.handleGenerate},
+		{"POST", "/api/listeners", s.handleListeners},
+		{"DELETE", "/api/listeners/{id}", s.handleStopListener},
+	}
+}
+
 // Routes registers all HTTP handlers.
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
+	for _, r := range s.apiRoutes() {
+		mux.HandleFunc(r.method+" "+r.pattern, r.handler)
+	}
 
-	mux.HandleFunc("GET /api/info", s.handleInfo)
-	mux.HandleFunc("GET /api/overview", s.handleOverview)
-	mux.HandleFunc("POST /api/connect", s.handleConnect)
-	mux.HandleFunc("POST /api/disconnect", s.handleDisconnect)
-	mux.HandleFunc("GET /api/profiles", s.handleListProfiles)
-	mux.HandleFunc("POST /api/profiles/{name}", s.handleUseProfile)
-
-	mux.HandleFunc("GET /api/sessions", s.handleSessions)
-	mux.HandleFunc("POST /api/sessions/{id}/kill", s.handleKillSession)
-	mux.HandleFunc("GET /api/sessions/{id}/fs", s.handleFsList)
-	mux.HandleFunc("GET /api/sessions/{id}/fs/pwd", s.handleFsPwd)
-	mux.HandleFunc("POST /api/sessions/{id}/fs/cd", s.handleFsCd)
-	mux.HandleFunc("GET /api/sessions/{id}/fs/cat", s.handleFsCat)
-	mux.HandleFunc("GET /api/sessions/{id}/fs/download", s.handleFsDownload)
-	mux.HandleFunc("POST /api/sessions/{id}/fs/upload", s.handleFsUpload)
-	mux.HandleFunc("POST /api/sessions/{id}/fs/mkdir", s.handleFsMkdir)
-	mux.HandleFunc("DELETE /api/sessions/{id}/fs", s.handleFsRm)
-	mux.HandleFunc("POST /api/sessions/{id}/fs/mv", s.handleFsMv)
-
-	mux.HandleFunc("GET /api/sessions/{id}/ifconfig", s.handleIfconfig)
-	mux.HandleFunc("GET /api/sessions/{id}/ps", s.handlePs)
-	mux.HandleFunc("POST /api/sessions/{id}/ps/kill", s.handleKillProcess)
-	mux.HandleFunc("GET /api/sessions/{id}/netstat", s.handleNetstat)
-	mux.HandleFunc("GET /api/sessions/{id}/env", s.handleGetEnv)
-	mux.HandleFunc("POST /api/sessions/{id}/env", s.handleSetEnv)
-	mux.HandleFunc("DELETE /api/sessions/{id}/env/{key}", s.handleUnsetEnv)
-	mux.HandleFunc("POST /api/sessions/{id}/exec", s.handleExec)
-	mux.HandleFunc("GET /api/sessions/{id}/screenshot", s.handleScreenshot)
-
-	// Extended session operations (P1)
-	mux.HandleFunc("POST /api/sessions/{id}/exec-assembly", s.handleExecAssembly)
-	mux.HandleFunc("POST /api/sessions/{id}/sideload", s.handleSideload)
-	mux.HandleFunc("POST /api/sessions/{id}/spawn-dll", s.handleSpawnDll)
-	mux.HandleFunc("POST /api/sessions/{id}/migrate", s.handleMigrate)
-	mux.HandleFunc("POST /api/sessions/{id}/process-dump", s.handleProcessDump)
-	mux.HandleFunc("POST /api/sessions/{id}/impersonate", s.handleImpersonate)
-	mux.HandleFunc("POST /api/sessions/{id}/make-token", s.handleMakeToken)
-	mux.HandleFunc("POST /api/sessions/{id}/rev-to-self", s.handleRevToSelf)
-	mux.HandleFunc("POST /api/sessions/{id}/getsystem", s.handleGetSystem)
-	mux.HandleFunc("GET /api/sessions/{id}/privs", s.handleGetPrivs)
-	mux.HandleFunc("GET /api/sessions/{id}/token-owner", s.handleCurrentTokenOwner)
-	mux.HandleFunc("POST /api/sessions/{id}/execute-token", s.handleExecuteToken)
-	mux.HandleFunc("POST /api/sessions/{id}/runas", s.handleRunAs)
-	mux.HandleFunc("GET /api/pivots/graph", s.handlePivotGraph)
-	mux.HandleFunc("GET /api/sessions/{id}/pivots/listeners", s.handlePivotListeners)
-	mux.HandleFunc("POST /api/sessions/{id}/pivots/listeners", s.handlePivotStartListener)
-	mux.HandleFunc("DELETE /api/sessions/{id}/pivots/listeners/{pivotID}", s.handlePivotStopListener)
-	mux.HandleFunc("POST /api/sessions/{id}/services", s.handleStartService)
-	mux.HandleFunc("POST /api/sessions/{id}/services/stop", s.handleStopService)
-	mux.HandleFunc("POST /api/sessions/{id}/services/remove", s.handleRemoveService)
-	mux.HandleFunc("POST /api/sessions/{id}/ssh", s.handleRunSSHCommand)
-	mux.HandleFunc("GET /api/sessions/{id}/extensions", s.handleListExtensions)
-	mux.HandleFunc("POST /api/sessions/{id}/extensions/register", s.handleRegisterExtension)
-	mux.HandleFunc("POST /api/sessions/{id}/extensions/call", s.handleCallExtension)
-	mux.HandleFunc("POST /api/sessions/{id}/msf", s.handleMsf)
-	mux.HandleFunc("POST /api/sessions/{id}/msf/remote", s.handleMsfRemote)
-	mux.HandleFunc("POST /api/msf/stage", s.handleMsfStage)
-	mux.HandleFunc("POST /api/sessions/{id}/backdoor", s.handleBackdoor)
-	mux.HandleFunc("POST /api/sessions/{id}/dll-hijack", s.handleHijackDLL)
-	mux.HandleFunc("POST /api/shellcode/rdi", s.handleShellcodeRDI)
-	mux.HandleFunc("POST /api/sessions/{id}/exec-shellcode", s.handleExecuteShellcode)
-	mux.HandleFunc("POST /api/sessions/{id}/psexec", s.handlePsExec)
-	mux.HandleFunc("POST /api/sessions/{id}/ping", s.handlePing)
-
-	mux.HandleFunc("GET /api/sessions/{id}/reg/subkeys", s.handleRegSubKeys)
-	mux.HandleFunc("GET /api/sessions/{id}/reg/values", s.handleRegValues)
-	mux.HandleFunc("GET /api/sessions/{id}/reg/read", s.handleRegRead)
-	mux.HandleFunc("POST /api/sessions/{id}/reg/write", s.handleRegWrite)
-	mux.HandleFunc("POST /api/sessions/{id}/reg/create-key", s.handleRegCreateKey)
-	mux.HandleFunc("POST /api/sessions/{id}/reg/delete-key", s.handleRegDeleteKey)
-	mux.HandleFunc("POST /api/sessions/{id}/reconfigure", s.handleReconfigure)
-	mux.HandleFunc("POST /api/sessions/{id}/close", s.handleCloseSession)
-	mux.HandleFunc("POST /api/monitor/start", s.handleMonitorStart)
-	mux.HandleFunc("POST /api/monitor/stop", s.handleMonitorStop)
-	mux.HandleFunc("POST /api/beacons/{id}/open-session", s.handleOpenSession)
-
-	mux.HandleFunc("GET /api/portfwd", s.handlePortfwdList)
-	mux.HandleFunc("POST /api/portfwd", s.handlePortfwdStart)
-	mux.HandleFunc("DELETE /api/portfwd/{port}", s.handlePortfwdStop)
-
-	mux.HandleFunc("POST /api/beacons/prune", s.handlePruneBeacons)
-	mux.HandleFunc("POST /api/sessions/prune", s.handlePruneSessions)
-	mux.HandleFunc("GET /api/aliases", s.handleAliases)
-	mux.HandleFunc("POST /api/aliases", s.handleAliasInstall)
-	mux.HandleFunc("DELETE /api/aliases/{name}", s.handleAliasRemove)
-	mux.HandleFunc("POST /api/sessions/{id}/aliases/{name}/run", s.handleAliasRun)
-
-	mux.HandleFunc("GET /api/beacons", s.handleBeacons)
-	mux.HandleFunc("GET /api/beacons/{id}", s.handleBeacon)
-	mux.HandleFunc("POST /api/beacons/{id}/rename", s.handleRenameBeacon)
-	mux.HandleFunc("DELETE /api/beacons/{id}", s.handleRmBeacon)
-	mux.HandleFunc("GET /api/beacons/{id}/tasks", s.handleBeaconTasks)
-	mux.HandleFunc("GET /api/beacons/{id}/tasks/{taskID}", s.handleBeaconTaskContent)
-	mux.HandleFunc("POST /api/sessions/{id}/rename", s.handleRenameSession)
-
-	mux.HandleFunc("GET /api/implant-profiles", s.handleImplantProfiles)
-	mux.HandleFunc("POST /api/implant-profiles", s.handleSaveImplantProfile)
-	mux.HandleFunc("DELETE /api/implant-profiles/{name}", s.handleDeleteImplantProfile)
-	mux.HandleFunc("DELETE /api/implant-builds/{name}", s.handleDeleteImplantBuild)
-	mux.HandleFunc("POST /api/regenerate", s.handleRegenerate)
-	mux.HandleFunc("GET /api/operators", s.handleGetOperators)
-	mux.HandleFunc("GET /api/compiler", s.handleCompiler)
-	mux.HandleFunc("GET /api/hosts", s.handleHosts)
-	mux.HandleFunc("GET /api/hosts/{uuid}", s.handleHost)
-	mux.HandleFunc("DELETE /api/hosts/{uuid}", s.handleHostRm)
-	mux.HandleFunc("DELETE /api/hosts/{uuid}/iocs/{iocID}", s.handleHostIOCRm)
-
-	mux.HandleFunc("GET /api/websites", s.handleWebsites)
-	mux.HandleFunc("GET /api/websites/{name}", s.handleWebsite)
-	mux.HandleFunc("POST /api/websites/{name}/content", s.handleWebsiteAddContent)
-	mux.HandleFunc("PUT /api/websites/{name}/content", s.handleWebsiteUpdateContent)
-	mux.HandleFunc("DELETE /api/websites/{name}/content", s.handleWebsiteRemoveContent)
-	mux.HandleFunc("DELETE /api/websites/{name}", s.handleWebsiteRemove)
-	mux.HandleFunc("GET /api/canaries", s.handleCanaries)
-
-	mux.HandleFunc("GET /api/wg/config", s.handleWGClientConfig)
-	mux.HandleFunc("GET /api/wg/ip", s.handleWGUniqueIP)
-	mux.HandleFunc("GET /api/sessions/{id}/wg/forwarders", s.handleWGForwarders)
-	mux.HandleFunc("POST /api/sessions/{id}/wg/forwarders", s.handleWGStartPortForward)
-	mux.HandleFunc("DELETE /api/sessions/{id}/wg/forwarders/{fwdID}", s.handleWGStopPortForward)
-	mux.HandleFunc("GET /api/sessions/{id}/wg/socks", s.handleWGSocksServers)
-	mux.HandleFunc("POST /api/sessions/{id}/wg/socks", s.handleWGStartSocks)
-	mux.HandleFunc("DELETE /api/sessions/{id}/wg/socks/{serverID}", s.handleWGStopSocks)
-
-	mux.HandleFunc("GET /api/socks", s.handleSocksList)
-	mux.HandleFunc("POST /api/socks", s.handleSocksStart)
-	mux.HandleFunc("DELETE /api/socks/{id}", s.handleSocksStop)
-
-	mux.HandleFunc("GET /api/loot", s.handleLootAll)
-	mux.HandleFunc("POST /api/loot", s.handleLootAdd)
-	mux.HandleFunc("POST /api/loot/{id}/rename", s.handleLootRename)
-	mux.HandleFunc("GET /api/loot/{id}", s.handleLootContent)
-	mux.HandleFunc("DELETE /api/loot/{id}", s.handleLootRemove)
-	mux.HandleFunc("GET /api/jobs", s.handleJobs)
-	mux.HandleFunc("GET /api/events", s.handleEvents)
-	mux.HandleFunc("GET /api/builders", s.handleBuilders)
-	mux.HandleFunc("POST /api/generate", s.handleGenerate)
-	mux.HandleFunc("POST /api/listeners", s.handleListeners)
-	mux.HandleFunc("DELETE /api/listeners/{id}", s.handleStopListener)
 	mux.HandleFunc("/ws/sessions/{id}/terminal", s.handleTerminalWS)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
@@ -221,11 +250,55 @@ func (s *Server) Routes() http.Handler {
 	return withCORS(withLogging(mux))
 }
 
+// RoutePatterns returns the full HTTP contract (method + path pattern) of the
+// registered routes, including the terminal WebSocket endpoint.
+func (s *Server) RoutePatterns() []RoutePattern {
+	out := make([]RoutePattern, 0, len(s.apiRoutes())+1)
+	for _, r := range s.apiRoutes() {
+		out = append(out, RoutePattern{Method: r.method, Pattern: r.pattern})
+	}
+	out = append(out, RoutePattern{Method: "GET", Pattern: "/ws/sessions/{id}/terminal"})
+	return out
+}
+
+// statusRecorder captures the response status code for the request log. It
+// forwards Flush and Hijack so WebSocket upgrades (terminal) keep working.
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+	r.status = code
+	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, fmt.Errorf("response writer does not support hijacking")
+}
+
+// withLogging mirrors every API request into the app log (sliver-ui.log on
+// Windows). Mutating methods are tagged so destructive operations (generate,
+// kill, delete, start/stop jobs, ...) form a lightweight audit trail.
 func withLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
-		fmt.Printf("[api] %s %s (%s)\n", r.Method, r.URL.Path, time.Since(start))
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
+		op := "GET"
+		if r.Method != http.MethodGet && r.Method != http.MethodOptions {
+			op = "MUTATE"
+		}
+		log.Printf("[api] %s %s %s -> %d (%s)", op, r.Method, r.URL.Path, rec.status, time.Since(start))
 	})
 }
 

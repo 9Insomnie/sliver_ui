@@ -102,7 +102,7 @@ describe('SettingsPage', () => {
   })
 
   it('shows an error banner when connect from file fails', async () => {
-    mockedApi.connect.mockResolvedValue({ success: false, error: 'boom' })
+    mockedApi.connect.mockRejectedValue(new Error('boom'))
     const view = renderPage()
     await loadConfigFile()
     fireEvent.click(screen.getByText('Connect'))

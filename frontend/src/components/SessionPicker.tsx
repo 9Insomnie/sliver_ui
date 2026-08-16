@@ -9,7 +9,7 @@ export default function SessionPicker({
   required,
 }: {
   value: string
-  onChange: (id: string) => void
+  onChange: (id: string, session?: Session) => void
   required?: string
 }) {
   const { t } = useTranslation()
@@ -18,9 +18,9 @@ export default function SessionPicker({
 
   const load = async () => {
     try {
-      setError('')
       const d = await api.sessions()
       setSessions(d.sessions || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     }
@@ -33,7 +33,7 @@ export default function SessionPicker({
   }, [])
 
   useEffect(() => {
-    if (!value && sessions.length > 0) onChange(sessions[0].ID)
+    if (!value && sessions.length > 0) onChange(sessions[0].ID, sessions[0])
   }, [sessions, value, onChange])
 
   if (error) return <div className="error-banner">{error}</div>
@@ -41,7 +41,13 @@ export default function SessionPicker({
   return (
     <div className="field">
       <label>{t('host.session')}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
+      <select
+        value={value}
+        onChange={(e) => {
+          const id = e.target.value
+          onChange(id, sessions.find((s) => s.ID === id))
+        }}
+      >
         {required && <option value="">{required}</option>}
         {sessions.length === 0 && <option value="">{t('sessions.empty')}</option>}
         {sessions.map((s) => (

@@ -267,7 +267,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
       </div>
       <ConfirmDialog
         open={!!confirmDel}
-        title={t('registry.confirmDelete')}
+        title={t(confirmDel?.isKey ? 'registry.confirmDeleteKey' : 'registry.confirmDeleteValue')}
         danger
         busy={deleting}
         confirmLabel={t('registry.delete')}
@@ -276,7 +276,7 @@ export default function RegistryTab({ sessionId, os }: { sessionId: string; os: 
       >
         <p>
           {confirmDel
-            ? t('registry.confirmDeleteBody', {
+            ? t(confirmDel.isKey ? 'registry.confirmDeleteKeyBody' : 'registry.confirmDeleteValueBody', {
                 name: confirmDel.name,
                 path: path || hive,
               })

@@ -45,6 +45,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   })
   const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
   if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`)
+  if (body.error) throw new Error(body.error)
   return body as T
 }
 
@@ -54,13 +55,13 @@ export const api = {
   overview: () => request<OverviewData>('/overview'),
 
   connect: (config: { content: string }) =>
-    request<{ success: boolean; error?: string }>('/connect', { method: 'POST', body: JSON.stringify(config) }),
+    request<{ success: boolean }>('/connect', { method: 'POST', body: JSON.stringify(config) }),
 
   disconnect: () => request<{ success: boolean }>('/disconnect', { method: 'POST' }),
 
   listProfiles: () => request<{ profiles: string[] }>('/profiles'),
 
-  useProfile: (name: string) => request<{ success: boolean; error?: string }>(`/profiles/${name}`, { method: 'POST' }),
+  useProfile: (name: string) => request<{ success: boolean }>(`/profiles/${name}`, { method: 'POST' }),
 
   sessions: () => request<{ sessions: Session[] }>('/sessions'),
 
@@ -90,13 +91,13 @@ export const api = {
     request<GenerateResult>(`/generate`, { method: 'POST', body: JSON.stringify(config) }),
 
   startListener: (job: { type: string; addr: string; port: number; tls: boolean }) =>
-    request<{ success: boolean; error?: string }>('/listeners', { method: 'POST', body: JSON.stringify(job) }),
+    request<{ success: boolean }>('/listeners', { method: 'POST', body: JSON.stringify(job) }),
 
   stopListener: (jobId: number) =>
-    request<{ success: boolean; error?: string }>(`/listeners/${jobId}`, { method: 'DELETE' }),
+    request<{ success: boolean }>(`/listeners/${jobId}`, { method: 'DELETE' }),
 
   killSession: (sessionId: string) =>
-    request<{ success: boolean; error?: string }>(`/sessions/${sessionId}/kill`, { method: 'POST' }),
+    request<{ success: boolean }>(`/sessions/${sessionId}/kill`, { method: 'POST' }),
 
   renameSession: (sessionId: string, name: string) =>
     request<{ success: boolean }>(`/sessions/${sessionId}/rename`, {
@@ -176,8 +177,6 @@ export const api = {
     }),
 
   socksStop: (id: number) => request<{ success: boolean }>(`/socks/${id}`, { method: 'DELETE' }),
-
-  terminalWs: (sessionId: string) => `${BASE}/sessions/${sessionId}/terminal`,
 
   // --- Filesystem ---
   fsList: (sessionId: string, path?: string) => {

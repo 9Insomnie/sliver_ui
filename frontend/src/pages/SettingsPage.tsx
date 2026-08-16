@@ -11,6 +11,21 @@ interface LoadedConfig {
   hasCerts: boolean
 }
 
+const CONFIG_KEY = 'sliverui.config'
+const PROFILE_KEY = 'sliverui.activeProfile'
+
+function parseConfig(text: string): LoadedConfig {
+  const data = JSON.parse(text)
+  const lport = Number(data.lport) || 0
+  const hasCerts = Boolean(data.ca_certificate && data.certificate && data.private_key)
+  return {
+    operator: data.operator || '',
+    lhost: data.lhost || '',
+    lport,
+    hasCerts,
+  }
+}
+
 export default function SettingsPage() {
   const { connected, version, refresh } = useConnection()
   const [profiles, setProfiles] = useState<string[]>([])
@@ -36,6 +51,17 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadProfiles()
+    try {
+      const saved = localStorage.getItem(CONFIG_KEY)
+      if (saved) {
+        setConfigContent(saved)
+        setConfigInfo(parseConfig(saved))
+      }
+    } catch {
+      localStorage.removeItem(CONFIG_KEY)
+    }
+    const profile = localStorage.getItem(PROFILE_KEY)
+    if (profile) setActiveProfile(profile)
   }, [])
 
   const useProfile = async (name: string) => {
@@ -43,13 +69,10 @@ export default function SettingsPage() {
     setError('')
     setSuccess('')
     try {
-      const res = await api.useProfile(name)
-      if (res.error) {
-        setError(`${t('common.failed')}: ${res.error}`)
-      } else {
-        setSuccess(t('settings.usingProfile', { name }))
-      }
+      await api.useProfile(name)
+      setSuccess(t('settings.usingProfile', { name }))
       setActiveProfile(name)
+      localStorage.setItem(PROFILE_KEY, name)
       refresh()
     } catch (e) {
       setError(`${t('common.failed')}: ${(e as Error).message}`)
@@ -67,19 +90,14 @@ export default function SettingsPage() {
     reader.onload = () => {
       const text = String(reader.result || '')
       try {
-        const data = JSON.parse(text)
-        const lport = Number(data.lport) || 0
-        const hasCerts = Boolean(data.ca_certificate && data.certificate && data.private_key)
+        const info = parseConfig(text)
         setConfigContent(text)
-        setConfigInfo({
-          operator: data.operator || '',
-          lhost: data.lhost || '',
-          lport,
-          hasCerts,
-        })
+        setConfigInfo(info)
+        localStorage.setItem(CONFIG_KEY, text)
       } catch (err) {
         setConfigContent('')
         setConfigInfo(null)
+        localStorage.removeItem(CONFIG_KEY)
         setError(`${t('settings.invalidConfig')}: ${(err as Error).message}`)
       }
     }
@@ -100,12 +118,8 @@ export default function SettingsPage() {
     setError('')
     setSuccess('')
     try {
-      const res = await api.connect({ content: configContent })
-      if (res.error) {
-        setError(`${t('common.failed')}: ${res.error}`)
-      } else {
-        setSuccess(t('settings.connectedMsg'))
-      }
+      await api.connect({ content: configContent })
+      setSuccess(t('settings.connectedMsg'))
       refresh()
       loadProfiles()
     } catch (e) {

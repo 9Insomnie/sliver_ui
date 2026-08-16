@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import { base64ToBytes, triggerDownload } from '../lib/binary'
-import type { CompilerInfo, ImplantBuild, ImplantConfig, ImplantProfile } from '../lib/types'
+import { parseC2Url } from '../lib/c2'
+import type { CompilerInfo, ImplantBuild, ImplantConfig, ImplantProfile, Job, Session } from '../lib/types'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { useToast } from '../components/common/Toast'
 import './pages.css'
@@ -15,6 +16,24 @@ const OS_ARCHES: { os: string; arches: string[] }[] = [
 ]
 
 const C2_TYPES = ['mtls', 'http', 'https', 'dns', 'wireguard']
+
+// Per-OS output formats, mirroring sliver-client's format options. `service`
+// is Windows-only; `shellcode` is Windows/Linux/macOS; `shared` applies to
+// every OS. Sending an unsupported format to the server would either fail or
+// get silently forced back to exe, so the dropdown only offers what the
+// target OS actually supports.
+const FORMATS: Record<string, string[]> = {
+  windows: ['exe', 'service', 'shellcode', 'shared'],
+  linux: ['exe', 'shared', 'shellcode'],
+  darwin: ['exe', 'shared', 'shellcode'],
+  freebsd: ['exe', 'shared'],
+}
+
+// Sliver names the WireGuard listener job "wg" while the build form calls the
+// transport "wireguard"; the other transports share their job name.
+function listenerJobName(type: string): string {
+  return type === 'wireguard' ? 'wg' : type
+}
 
 export default function ImplantsPage() {
   const [builds, setBuilds] = useState<ImplantBuild[]>([])
@@ -39,6 +58,8 @@ export default function ImplantsPage() {
   const [deleting, setDeleting] = useState<{ kind: 'build' | 'profile'; name: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [compiler, setCompiler] = useState<CompilerInfo | null>(null)
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
   const { t } = useTranslation()
   const toast = useToast()
 
@@ -53,9 +74,9 @@ export default function ImplantsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.builders()
       setBuilds(data.builders || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     }
@@ -78,21 +99,67 @@ export default function ImplantsPage() {
     }
   }
 
+  const loadDetect = async () => {
+    try {
+      const [s, j] = await Promise.all([api.sessions(), api.jobs()])
+      setSessions(s.sessions || [])
+      setJobs(j.jobs || [])
+    } catch {
+      // best-effort: keep the previous detection when the server is unreachable
+    }
+  }
+
   useEffect(() => {
     load()
     loadProfiles()
     loadCompiler()
+    loadDetect()
     const t = setInterval(load, 3000)
-    return () => clearInterval(t)
+    const td = setInterval(loadDetect, 5000)
+    return () => {
+      clearInterval(t)
+      clearInterval(td)
+    }
   }, [])
 
+  const detectedC2 = useMemo(() => {
+    const session = sessions.find((s) => s.ActiveC2)
+    const host = session ? parseC2Url(session.ActiveC2).host : ''
+    const typeName = listenerJobName(c2Type)
+    const match = jobs.find((j) => j.Name.toLowerCase() === typeName)
+    const fallback = jobs[0]
+    const useJob = match || fallback
+    return {
+      host,
+      port: match ? String(match.Port) : '',
+      anyPort: useJob ? String(useJob.Port) : '',
+      source: useJob?.Name || '',
+      match: !!match,
+    }
+  }, [sessions, jobs, c2Type])
+
+  useEffect(() => {
+    if (c2Host === '127.0.0.1' && detectedC2.host) setC2Host(detectedC2.host)
+    if (c2Port === '8888' && detectedC2.port) setC2Port(detectedC2.port)
+  }, [detectedC2, c2Host, c2Port])
+
   const currentOS = OS_ARCHES.find((o) => o.os === os)
+  const formatOptions = FORMATS[os] || ['exe']
+
+  const formatLabel = (f: string) =>
+    f === 'exe'
+      ? 'EXE'
+      : f === 'service'
+        ? t('implants.formatService')
+        : f === 'shellcode'
+          ? t('implants.formatShellcode')
+          : t('implants.formatShared')
 
   const buildConfig = (): Partial<ImplantConfig> => ({
     name,
     os,
     arch,
-    format: os === 'windows' ? format : 'exe',
+    format,
     target: os,
     transport: c2Type,
     c2: [{ address: `${c2Host}:${c2Port}`, protocol: c2Type }],
@@ -146,15 +213,10 @@ export default function ImplantsPage() {
     if (cfg.Format) setFormat(cfg.Format)
     const c2 = cfg.C2?.[0]
     if (c2?.URL) {
-      const proto = c2.URL.split('://')[0] || 'mtls'
+      const { proto, host, port } = parseC2Url(c2.URL)
       setC2Type(proto)
-      const addr = c2.URL.split('://')[1] || ''
-      if (addr) {
-        const [h, ...portParts] = addr.split(':')
-        if (h) setC2Host(h)
-        const portStr = portParts.join(':')
-        if (portStr) setC2Port(portStr)
-      }
+      if (host) setC2Host(host)
+      if (port) setC2Port(port)
     }
     if (cfg.Interval) setReconInterval(String(cfg.Interval))
     if (cfg.Jitter !== undefined) setJitter(String(cfg.Jitter))
@@ -294,8 +356,11 @@ export default function ImplantsPage() {
             <select
               value={os}
               onChange={(e) => {
-                setOs(e.target.value)
-                setArch(OS_ARCHES.find((o) => o.os === e.target.value)?.arches[0] || 'amd64')
+                const next = e.target.value
+                setOs(next)
+                setArch(OS_ARCHES.find((o) => o.os === next)?.arches[0] || 'amd64')
+                const formats = FORMATS[next] || ['exe']
+                if (!formats.includes(format)) setFormat(formats[0])
               }}
             >
               {OS_ARCHES.map((o) => (
@@ -318,10 +383,11 @@ export default function ImplantsPage() {
           <div className="field">
             <label>{t('implants.format')}</label>
             <select value={format} onChange={(e) => setFormat(e.target.value)}>
-              <option value="exe">EXE</option>
-              <option value="service">{t('implants.formatService')}</option>
-              <option value="shellcode">{t('implants.formatShellcode')}</option>
-              <option value="shared">{t('implants.formatShared')}</option>
+              {formatOptions.map((f) => (
+                <option key={f} value={f}>
+                  {formatLabel(f)}
+                </option>
+              ))}
             </select>
           </div>
           <div className="field">
@@ -374,6 +440,37 @@ export default function ImplantsPage() {
             </button>
           </div>
         </div>
+        {detectedC2.host && detectedC2.anyPort && (
+          <div
+            className="form-hint"
+            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+          >
+            <span>
+              {detectedC2.match
+                ? t('implants.detectedListener', {
+                    name: detectedC2.source,
+                    host: detectedC2.host,
+                    port: detectedC2.port,
+                  })
+                : t('implants.detectedOther', {
+                    type: c2Type,
+                    name: detectedC2.source,
+                    host: detectedC2.host,
+                    port: detectedC2.anyPort,
+                  })}
+            </span>
+            <button
+              type="button"
+              className="btn sm"
+              onClick={() => {
+                setC2Host(detectedC2.host)
+                setC2Port(detectedC2.anyPort)
+              }}
+            >
+              {t('common.use')}
+            </button>
+          </div>
+        )}
         <div className="profile-save" style={{ marginTop: 4, display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             className="profile-name-input"

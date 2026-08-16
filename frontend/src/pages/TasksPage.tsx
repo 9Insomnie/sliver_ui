@@ -45,7 +45,6 @@ export default function TasksPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    setError('')
     try {
       const bd = await api.beacons()
       const beacons = bd.beacons || []
@@ -61,6 +60,7 @@ export default function TasksPage() {
       })
       all.sort((a, b) => b.task.CreatedAt - a.task.CreatedAt)
       setRows(all)
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

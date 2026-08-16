@@ -43,9 +43,9 @@ export default function SessionsPage() {
 
   const load = async () => {
     try {
-      setError('')
       const data = await api.sessions()
       setSessions(data.sessions || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -92,9 +92,8 @@ export default function SessionsPage() {
   const kill = async (s: Session) => {
     setBusy(true)
     try {
-      const res = await api.killSession(s.ID)
-      if (res.error) toast.push('error', `${t('common.failed')}: ${res.error}`)
-      else toast.push('success', t('sessions.killed', { name: s.Name }))
+      await api.killSession(s.ID)
+      toast.push('success', t('sessions.killed', { name: s.Name }))
       setKilling(null)
       load()
     } catch (e) {

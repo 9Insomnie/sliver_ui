@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 import { base64ToBytes, bytesToText, triggerDownload } from '../../lib/binary'
+import { joinPath, parentOf } from '../../lib/paths'
 import type { DirView } from '../../lib/types'
 import ConfirmDialog from '../common/ConfirmDialog'
 import '../../pages/pages.css'
@@ -61,28 +62,16 @@ export default function FilesTab({
 
   const enter = (name: string) => {
     setViewing(null)
-    const next = joinPath(path, name)
+    const next = joinPath(path, name, sep)
     load(next)
   }
 
   const up = () => {
     setViewing(null)
-    load(parentOf(path))
+    load(parentOf(path, sep))
   }
 
   const sep = os === 'windows' ? '\\' : '/'
-
-  const joinPath = (base: string, name: string) =>
-    base.endsWith(sep) ? `${base}${name}` : `${base}${sep}${name}`
-
-  const parentOf = (p: string) => {
-    if (!p) return p
-    const trimmed = p.endsWith(sep) && p.length > 1 ? p.slice(0, -1) : p
-    if (!trimmed) return p
-    const idx = trimmed.lastIndexOf(sep)
-    if (idx <= 0) return trimmed[idx] === sep ? sep : '/'
-    return trimmed.slice(0, idx)
-  }
 
   const refresh = () => load(path)
 
@@ -90,7 +79,7 @@ export default function FilesTab({
     const name = window.prompt(t('files.mkdir'))
     if (!name) return
     try {
-      await api.fsMkdir(sessionId, joinPath(path, name))
+      await api.fsMkdir(sessionId, joinPath(path, name, sep))
       setMessage(t('files.refresh'))
       refresh()
     } catch (e) {
@@ -104,7 +93,7 @@ export default function FilesTab({
     try {
       const buf = await file.arrayBuffer()
       const b64 = arrayBufferToBase64(buf)
-      await api.fsUpload(sessionId, joinPath(path, file.name), b64)
+      await api.fsUpload(sessionId, joinPath(path, file.name, sep), b64)
       setMessage(t('files.uploaded', { name: file.name }))
       refresh()
     } catch (err) {
@@ -116,7 +105,7 @@ export default function FilesTab({
   const remove = async (name: string) => {
     setBusy(true)
     try {
-      await api.fsRm(sessionId, joinPath(path, name), recursive)
+      await api.fsRm(sessionId, joinPath(path, name, sep), recursive)
       setConfirmDelete(null)
       refresh()
     } catch (e) {
@@ -129,7 +118,7 @@ export default function FilesTab({
   const download = async (name: string, isDir: boolean) => {
     if (isDir) return
     try {
-      const res = await api.fsDownload(sessionId, joinPath(path, name))
+      const res = await api.fsDownload(sessionId, joinPath(path, name, sep))
       const bytes = base64ToBytes(res.Data)
       triggerDownload(res.Name || name, bytes)
     } catch (e) {
@@ -143,7 +132,7 @@ export default function FilesTab({
       return
     }
     try {
-      const res = await api.fsCat(sessionId, joinPath(path, name))
+      const res = await api.fsCat(sessionId, joinPath(path, name, sep))
       setViewing({ name: res.Name || name, data: res.Data })
     } catch (e) {
       setError((e as Error).message)
@@ -154,7 +143,7 @@ export default function FilesTab({
     const newName = window.prompt(t('files.renamePrompt', { name }), name)
     if (!newName || newName === name) return
     try {
-      await api.fsMv(sessionId, joinPath(path, name), joinPath(path, newName))
+      await api.fsMv(sessionId, joinPath(path, name, sep), joinPath(path, newName, sep))
       setMessage(t('files.renamed', { old: name, new: newName }))
       refresh()
     } catch (e) {

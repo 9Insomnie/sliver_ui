@@ -68,9 +68,9 @@ export default function LootPage() {
 
   const load = async () => {
     try {
-      setError('')
       const d = await api.lootList(filter === 'all' ? undefined : filter.toLowerCase())
       setLoot(d.loot || [])
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     } finally {

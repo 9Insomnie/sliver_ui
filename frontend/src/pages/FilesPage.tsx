@@ -20,9 +20,9 @@ export default function FilesPage() {
       <div className="card">
         <SessionPicker
           value={sessionId}
-          onChange={(id) => {
+          onChange={(id, session) => {
             setSessionId(id)
-            setOs(undefined)
+            setOs(session?.OS)
           }}
         />
       </div>
