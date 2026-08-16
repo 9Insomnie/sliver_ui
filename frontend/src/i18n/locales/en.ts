@@ -452,6 +452,7 @@ export default {
     disconnected: 'Disconnected',
     connectedMsg: '[*] Connected to session terminal. Type "exit" to quit.\r\n',
     disconnectedMsg: '\r\n[*] Disconnected.',
+    reconnecting: '\r\n[*] Connection lost. Reconnecting…\r\n',
     errorMsg: '\r\n[!] Connection error.\r\n',
   },
   detail: {

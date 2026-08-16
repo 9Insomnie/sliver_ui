@@ -2,14 +2,6 @@ export const WS_MSG_DATA = 0x01
 export const WS_MSG_RESIZE = 0x02
 export const WS_MSG_CLOSE = 0x03
 
-// xterm sends DEL (0x7f) for the backspace key, but Windows shells run in raw
-// (non-editing) mode over the sliver tunnel and pass it through literally,
-// corrupting the command line. BS (0x08) is honored by both Windows and POSIX
-// shells, so translate before sending.
-export function translateInput(data: string): string {
-  return data.replace(/\x7f/g, '\x08')
-}
-
 export interface WsFrame {
   type: number
   payload: Uint8Array

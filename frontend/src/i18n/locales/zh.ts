@@ -452,6 +452,7 @@ export default {
     disconnected: '未连接',
     connectedMsg: '[*] 已连接到会话终端，输入 "exit" 退出。\r\n',
     disconnectedMsg: '\r\n[*] 已断开连接。',
+    reconnecting: '\r\n[*] 连接已断开，正在重连…\r\n',
     errorMsg: '\r\n[!] 连接错误。\r\n',
   },
   detail: {

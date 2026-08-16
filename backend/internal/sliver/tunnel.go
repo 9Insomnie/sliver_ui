@@ -1,6 +1,7 @@
 package sliver
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"sync"
@@ -16,11 +17,15 @@ type TunnelIO struct {
 	ID        uint64
 	SessionID string
 
-	send     chan []byte
-	incoming chan []byte
+	send chan []byte
+
+	mu     sync.Mutex
+	buf    bytes.Buffer
+	cond   *sync.Cond
+	closed bool
 
 	closeOnce sync.Once
-	closed    chan struct{}
+	closedCh  chan struct{}
 }
 
 // TunnelManager holds the single shared TunnelData stream and maps tunnel IDs
@@ -77,10 +82,7 @@ func (tm *TunnelManager) loop() {
 			tunnel.close()
 			continue
 		}
-		select {
-		case tunnel.incoming <- msg.Data:
-		case <-tunnel.closed:
-		}
+		tunnel.push(msg.Data)
 	}
 }
 
@@ -103,9 +105,9 @@ func (tm *TunnelManager) CreateTunnel(sessionID string) (*TunnelIO, error) {
 		ID:        t.TunnelID,
 		SessionID: sessionID,
 		send:      make(chan []byte, 64),
-		incoming:  make(chan []byte, 64),
-		closed:    make(chan struct{}),
+		closedCh:  make(chan struct{}),
 	}
+	tunnel.cond = sync.NewCond(&tunnel.mu)
 	tm.mu.Lock()
 	tm.tunnels[tunnel.ID] = tunnel
 	tm.mu.Unlock()
@@ -123,7 +125,7 @@ func (tm *TunnelManager) CreateTunnel(sessionID string) (*TunnelIO, error) {
 					tunnel.close()
 					return
 				}
-			case <-tunnel.closed:
+			case <-tunnel.closedCh:
 				return
 			}
 		}
@@ -177,15 +179,38 @@ func (tm *TunnelManager) closeAll() {
 	}
 }
 
-// Read implements io.Reader (implant -> local).
-func (t *TunnelIO) Read(p []byte) (int, error) {
-	select {
-	case data := <-t.incoming:
-		n := copy(p, data)
-		return n, nil
-	case <-t.closed:
-		return 0, io.EOF
+// maxTunnelBuffer bounds the read buffer so a stalled consumer cannot grow it
+// without limit. Output beyond the cap is dropped (preferred to blocking the
+// shared tunnel stream for all tunnels).
+const maxTunnelBuffer = 8 << 20
+
+// push appends implant data to the read buffer and wakes blocked readers.
+func (t *TunnelIO) push(data []byte) {
+	if len(data) == 0 {
+		return
 	}
+	t.mu.Lock()
+	if t.buf.Len()+len(data) > maxTunnelBuffer {
+		t.mu.Unlock()
+		return
+	}
+	t.buf.Write(data)
+	t.cond.Broadcast()
+	t.mu.Unlock()
+}
+
+// Read implements io.Reader (implant -> local). Data is buffered so a single
+// tunnel message larger than the caller's buffer is never dropped.
+func (t *TunnelIO) Read(p []byte) (int, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for t.buf.Len() == 0 {
+		if t.closed {
+			return 0, io.EOF
+		}
+		t.cond.Wait()
+	}
+	return t.buf.Read(p)
 }
 
 // Write implements io.Writer (local -> implant).
@@ -193,13 +218,17 @@ func (t *TunnelIO) Write(p []byte) (int, error) {
 	select {
 	case t.send <- p:
 		return len(p), nil
-	case <-t.closed:
+	case <-t.closedCh:
 		return 0, io.EOF
 	}
 }
 
 func (t *TunnelIO) close() {
 	t.closeOnce.Do(func() {
-		close(t.closed)
+		close(t.closedCh)
+		t.mu.Lock()
+		t.closed = true
+		t.cond.Broadcast()
+		t.mu.Unlock()
 	})
 }

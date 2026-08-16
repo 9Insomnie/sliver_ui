@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { wsUrl } from '../lib/api'
-import { encodeFrame, decodeFrame, translateInput, WS_MSG_DATA, WS_MSG_RESIZE, WS_MSG_CLOSE } from '../lib/terminal'
+import { encodeFrame, decodeFrame, WS_MSG_DATA, WS_MSG_RESIZE, WS_MSG_CLOSE } from '../lib/terminal'
 import './pages.css'
 import './terminal.css'
+
+const RECONNECT_BASE_MS = 1000
+const RECONNECT_MAX_MS = 5000
 
 export default function TerminalPage() {
   const { id } = useParams()
@@ -44,41 +47,12 @@ export default function TerminalPage() {
     termRef.current = term
     fitRef.current = fit
 
-    const ws = new WebSocket(wsUrl(`/ws/sessions/${id}/terminal`))
-    ws.binaryType = 'arraybuffer'
-    wsRef.current = ws
-    let wsClosed = false
-    ws.onopen = () => {
-      if (wsClosed) return
-      setConnected(true)
-      term.writeln(t('terminal.connectedMsg'))
-      sendResize()
-    }
-    ws.onmessage = (e) => {
-      if (wsClosed) return
-      const frame = decodeFrame(e.data)
-      if (!frame) return
-      if (frame.type === WS_MSG_DATA) {
-        term.write(frame.payload)
-      } else if (frame.type === WS_MSG_CLOSE) {
-        setConnected(false)
-        term.writeln(t('terminal.disconnectedMsg'))
-      }
-    }
-    ws.onclose = () => {
-      if (wsClosed) return
-      setConnected(false)
-      term.writeln(t('terminal.disconnectedMsg'))
-    }
-    ws.onerror = () => {
-      if (!wsClosed) term.writeln(t('terminal.errorMsg'))
-    }
-
-    const onData = (data: string) => {
-      if (!wsClosed && ws.readyState === WebSocket.OPEN)
-        ws.send(encodeFrame(WS_MSG_DATA, translateInput(data)))
-    }
-    term.onData(onData)
+    // Reconnect state. `stopped` flips on unmount so timers and in-flight
+    // sockets are torn down; `attempts` drives exponential backoff.
+    let stopped = false
+    let attempts = 0
+    let reconnectScheduled = false
+    let reconnectTimer: number | undefined
 
     const sendResize = () => {
       if (!fitRef.current || !termRef.current) return
@@ -88,21 +62,80 @@ export default function TerminalPage() {
         return
       }
       const term = termRef.current
-      if (term.cols > 0 && term.rows > 0 && !wsClosed && ws.readyState === WebSocket.OPEN) {
-        ws.send(encodeFrame(WS_MSG_RESIZE, JSON.stringify({ cols: term.cols, rows: term.rows })))
+      if (
+        term.cols > 0 &&
+        term.rows > 0 &&
+        !stopped &&
+        wsRef.current &&
+        wsRef.current.readyState === WebSocket.OPEN
+      ) {
+        wsRef.current.send(encodeFrame(WS_MSG_RESIZE, JSON.stringify({ cols: term.cols, rows: term.rows })))
       }
     }
+
+    const scheduleReconnect = () => {
+      if (stopped || reconnectScheduled) return
+      reconnectScheduled = true
+      setConnected(false)
+      const delay = Math.min(RECONNECT_BASE_MS * 2 ** attempts, RECONNECT_MAX_MS)
+      attempts += 1
+      term.writeln(t('terminal.reconnecting'))
+      reconnectTimer = window.setTimeout(connect, delay)
+    }
+
+    const connect = () => {
+      if (stopped) return
+      reconnectScheduled = false
+      const ws = new WebSocket(wsUrl(`/ws/sessions/${id}/terminal`))
+      ws.binaryType = 'arraybuffer'
+      wsRef.current = ws
+      ws.onopen = () => {
+        if (stopped) return
+        attempts = 0
+        setConnected(true)
+        term.writeln(t('terminal.connectedMsg'))
+        sendResize()
+      }
+      ws.onmessage = (e) => {
+        if (stopped) return
+        const frame = decodeFrame(e.data)
+        if (!frame) return
+        if (frame.type === WS_MSG_DATA) {
+          term.write(frame.payload)
+        } else if (frame.type === WS_MSG_CLOSE) {
+          if (frame.payload.length > 0) {
+            term.writeln(new TextDecoder().decode(frame.payload))
+          }
+          scheduleReconnect()
+        }
+      }
+      ws.onclose = () => {
+        if (stopped) return
+        scheduleReconnect()
+      }
+      ws.onerror = () => {
+        // onclose follows onerror; it handles the reconnect scheduling.
+      }
+    }
+
+    const onData = (data: string) => {
+      const ws = wsRef.current
+      if (!stopped && ws && ws.readyState === WebSocket.OPEN)
+        ws.send(encodeFrame(WS_MSG_DATA, data))
+    }
+    term.onData(onData)
 
     const onResize = sendResize
     window.addEventListener('resize', onResize)
 
-    const enter = sendResize
-    enter()
+    connect()
+    sendResize()
 
     return () => {
-      wsClosed = true
+      stopped = true
+      if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
       window.removeEventListener('resize', onResize)
-      ws.close()
+      if (wsRef.current) wsRef.current.close()
       term.dispose()
     }
   }, [id])
