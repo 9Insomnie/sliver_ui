@@ -27,8 +27,10 @@ const (
 //
 // Client -> server:
 //
-//	0x01: raw terminal bytes
+//	0x01: raw terminal bytes (DEL -> BS and bare CR -> CRLF are rewritten for
+//	      Windows sessions)
 //	0x02: JSON {"cols":N,"rows":N} (resize; acked but not forwarded to PTY)
+//	0x03: close (sends "exit" to the shell)
 //
 // Server -> client:
 //
@@ -49,6 +51,45 @@ func (s *Server) handleTerminalWS(w http.ResponseWriter, r *http.Request) {
 		ws.PayloadType = websocket.BinaryFrame
 		s.runTerminal(ws, c, id)
 	}}.ServeHTTP(w, r)
+}
+
+//	maxWSFramePayload caps an incoming client frame so a corrupt header cannot
+//	force an unbounded read.
+const maxWSFramePayload = 1 << 20
+
+// wsFrameReader reassembles our [type][len][payload] frames. x/net/websocket's
+// Conn.Read fills the caller's buffer and returns the rest of the same frame on
+// subsequent calls, so a frame larger than the read buffer spans several reads;
+// leftover bytes are kept here.
+type wsFrameReader struct {
+	r   io.Reader
+	buf []byte
+}
+
+// newWSFrameReader wraps a byte source (the WebSocket connection) in a
+// reassembling frame reader.
+func newWSFrameReader(r io.Reader) *wsFrameReader {
+	return &wsFrameReader{r: r}
+}
+
+// readFull returns exactly n bytes of the current frame.
+func (r *wsFrameReader) readFull(n int) ([]byte, error) {
+	for len(r.buf) < n {
+		tmp := make([]byte, 8192)
+		m, err := r.r.Read(tmp)
+		if m > 0 {
+			r.buf = append(r.buf, tmp[:m]...)
+		}
+		if err != nil {
+			if len(r.buf) >= n {
+				break
+			}
+			return nil, err
+		}
+	}
+	out := r.buf[:n]
+	r.buf = r.buf[n:]
+	return out, nil
 }
 
 func (s *Server) runTerminal(ws *websocket.Conn, c *sliver.Client, sessionID string) {
@@ -102,20 +143,28 @@ func (s *Server) runTerminal(ws *websocket.Conn, c *sliver.Client, sessionID str
 	}()
 
 	// WS -> tunnel: forward browser keystrokes to the implant.
-	frame := make([]byte, 8192)
+	reader := newWSFrameReader(ws)
 	for {
-		n, err := ws.Read(frame)
+		header, err := reader.readFull(5)
 		if err != nil {
 			if err != io.EOF {
-				tunnel.Write([]byte("exit\n"))
+				_, _ = tunnel.Write([]byte("exit\n"))
 			}
 			return
 		}
-		if n < 5 {
+		msgType := header[0]
+		length := binary.BigEndian.Uint32(header[1:])
+		if length > maxWSFramePayload {
+			_, _ = reader.readFull(int(length))
 			continue
 		}
-		msgType := frame[0]
-		payload := frame[5:n]
+		payload, err := reader.readFull(int(length))
+		if err != nil {
+			if err != io.EOF {
+				_, _ = tunnel.Write([]byte("exit\n"))
+			}
+			return
+		}
 		switch msgType {
 		case wsMsgResize:
 			var dims struct {
@@ -123,15 +172,46 @@ func (s *Server) runTerminal(ws *websocket.Conn, c *sliver.Client, sessionID str
 				Rows int `json:"rows"`
 			}
 			_ = json.Unmarshal(payload, &dims)
+		case wsMsgClose:
+			_, _ = tunnel.Write([]byte("exit\n"))
+			return
 		case wsMsgData:
 			if len(payload) > 0 {
 				if windowsSession {
-					payload = normalizeCRLF(payload)
+					payload = translateBackspace(normalizeCRLF(payload))
 				}
 				_, _ = tunnel.Write(payload)
 			}
 		}
 	}
+}
+
+// translateBackspace maps DEL (0x7f) to BS (0x08). xterm.js sends DEL for the
+// backspace key; Windows shells running over a pipe have no console, so they
+// pass DEL through literally and corrupt the command line. BS is the edit
+// character honored by both Windows and POSIX shells. This must only be applied
+// to Windows sessions — POSIX shells (canonical mode / readline) treat DEL as
+// their native erase character.
+func translateBackspace(b []byte) []byte {
+	hasDel := false
+	for _, c := range b {
+		if c == 0x7f {
+			hasDel = true
+			break
+		}
+	}
+	if !hasDel {
+		return b
+	}
+	out := make([]byte, len(b))
+	for i, c := range b {
+		if c == 0x7f {
+			out[i] = 0x08
+		} else {
+			out[i] = c
+		}
+	}
+	return out
 }
 
 // normalizeCRLF rewrites bare CR (carriage return) bytes into CRLF. Windows

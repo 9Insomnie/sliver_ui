@@ -45,6 +45,15 @@ Everything ships as a **single static binary** — the built frontend is embedde
 └───────────────────────────────┘
 ```
 
+## Screenshots
+
+| | |
+| :-: | :-: |
+| **Dashboard** — live overview of sessions, beacons, listeners and SOCKS | **Sessions** — session list with search, sort and a 13-tab detail workspace |
+| ![Dashboard](Dashboard.png) | ![Sessions](Sessions.png) |
+| **Implants** — payload generation with auto-detected C2 listeners | **Terminal** — full-screen xterm.js shell per session |
+| ![Implants](Implants.png) | ![Terminal](Terminal.png) |
+
 ## Running the app
 
 - **Windows** — starts in a native **WebView2 desktop window** (1440×900). Use `--no-window` to run as a plain HTTP server instead.
